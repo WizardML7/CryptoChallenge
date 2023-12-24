@@ -38,21 +38,21 @@ def solve(n, guess):
 
 
 def caesarCipher(ciphertext):
-    for i in range(1,25):
-        decrypted_text = ""
-        for char in ciphertext:
-            if char.isalpha():
-                # Determine whether the character is uppercase or lowercase
-                is_upper = char.isupper()
+    decrypted_text = ""
+    for char in ciphertext:
+        if char.isalpha():
+            # Determine whether the character is uppercase or lowercase
+            is_upper = char.isupper()
                 
-                # Apply the Caesar cipher decryption
-                decrypted_char = chr((ord(char) - i - ord('A' if is_upper else 'a')) % 26 + ord('A' if is_upper else 'a'))
+            # Apply the Caesar cipher decryption
+            decrypted_char = chr((ord(char) - 23 - ord('A' if is_upper else 'a')) % 26 + ord('A' if is_upper else 'a'))
 
-                decrypted_text += decrypted_char
-            else:
-                decrypted_text += char
+            decrypted_text += decrypted_char
+        else:
+            decrypted_text += char
+        
+    return decrypted_text
 
-        print(decrypted_text)
 
 hashes = {}
 
@@ -65,8 +65,7 @@ for i in range(0, 2):
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
     elif level == 1:
-        caesarCipher(data['challenge'])
-        guess = input("Put in the cleartext for level one here: ")
+        guess = caesarCipher(data['challenge'])
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
     elif level == 2:
