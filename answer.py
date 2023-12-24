@@ -39,18 +39,26 @@ def solve(n, guess):
 	return resp.json()
 
 
-# Fetch level 0
-level = 0
 hashes = {}
-data = fetch(level)
 
-# Level 0 is a freebie and gives you the password
-guess = data['challenge']
-h = solve(level, guess)
+for i in range(0, 9):
+    level = i
+    data = fetch(level)
 
+    if level == 0:
+        guess = data['challenge']
+        h = solve(level, guess)
+    elif level == 1:
+        guess = "Roman"
+        h = solve(level, guess)
+    elif level == 2:
+        print("Level 2")
+    else:
+        pass
+
+		
 # If we obtained a hash add it to the dict
 if 'hash' in h: hashes[level] = h['hash']
-
 
 # Display all current hash
 for k,v in hashes.items():
