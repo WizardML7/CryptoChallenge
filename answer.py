@@ -41,24 +41,23 @@ def solve(n, guess):
 
 hashes = {}
 
-for i in range(0, 9):
+for i in range(0, 2):
     level = i
     data = fetch(level)
 
     if level == 0:
         guess = data['challenge']
         h = solve(level, guess)
+        if 'hash' in h: hashes[level] = h['hash']
     elif level == 1:
-        guess = "Roman"
+        guess = "Caesar Cipher"
         h = solve(level, guess)
+        if 'hash' in h: hashes[level] = h['hash']
     elif level == 2:
         print("Level 2")
     else:
         pass
 
-		
-# If we obtained a hash add it to the dict
-if 'hash' in h: hashes[level] = h['hash']
 
 # Display all current hash
 for k,v in hashes.items():
