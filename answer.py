@@ -69,7 +69,7 @@ for i in range(0, 3):
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
     elif level == 2:
-        guess = "PRAE2014AN"
+        guess = input("Input guess here: ")
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
     else:
