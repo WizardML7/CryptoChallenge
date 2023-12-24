@@ -56,7 +56,7 @@ def caesarCipher(ciphertext):
 
 hashes = {}
 
-for i in range(0, 2):
+for i in range(0, 3):
     level = i
     data = fetch(level)
 
@@ -69,7 +69,9 @@ for i in range(0, 2):
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
     elif level == 2:
-        print("Level 2")
+        guess = "PRAE2014AN"
+        h = solve(level, guess)
+        if 'hash' in h: hashes[level] = h['hash']
     else:
         pass
 
