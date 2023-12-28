@@ -121,7 +121,7 @@ def extract_message_from_pixel_data(pixel_data):
 
 hashes = {}
 
-for i in range(3, 4):
+for i in range(4, 5):
     level = i
     data = fetch(level)
 
@@ -144,6 +144,10 @@ for i in range(3, 4):
         guess = extract_pixel_data(guess)
         guess = extract_message_from_pixel_data(guess)
         guess = input("Give the guess here: ")
+        h = solve(level, guess)
+        if 'hash' in h: hashes[level] = h['hash']
+    elif level == 4:
+        guess = input("Input guess here: ")
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
     else:
