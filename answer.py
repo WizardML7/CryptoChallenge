@@ -149,6 +149,11 @@ for i in range(4, 5):
     elif level == 4:
         guess = input("Input guess here: ")
         h = solve(level, guess)
+        # url = "http://crypto.praetorian.com/static/files/hint4.py"
+        # resp = requests.get(url, headers=token(email))
+        # resp.close()
+        # print(resp.content)
+        
         if 'hash' in h: hashes[level] = h['hash']
     else:
         pass
