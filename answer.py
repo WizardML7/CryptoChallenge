@@ -212,7 +212,7 @@ for i in range(6, 7):
     elif level == 8:
         print("Placeholder")
 
-        # url = "http://crypto.praetorian.com/static/files/hint4.py"
+        # url = "http://crypto.praetorian.com/hash"
         # resp = requests.get(url, headers=token(email))
         # resp.close()
         # print(resp.content)
@@ -225,3 +225,9 @@ for i in range(6, 7):
 # Display all current hash
 for k,v in hashes.items():
 	print("Level {}: {}".format(k, v))
+     
+url = "http://crypto.praetorian.com/hash"
+resp = requests.get(url, headers=token(email))
+resp.close()
+print(resp.content)
+    
