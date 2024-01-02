@@ -122,134 +122,6 @@ def extract_message_from_pixel_data(pixel_data):
         print("Error decoding message:", e)
         return None
 
-def extract_message_from_wav(wav_file_path):
-    try:
-        # Open the WAV file
-        with wave.open(wav_file_path, 'rb') as wav_file:
-            # Get the number of frames in the WAV file
-            num_frames = wav_file.getnframes()
-
-            # Read all frames
-            frames = wav_file.readframes(num_frames)
-
-        message_bits = []
-
-        # Iterate through each byte in the frames
-        for frame in frames:
-            # Extract all 8 bits from each byte
-            for i in range(7, -1, -1):
-                # Extract the i-th bit and append to the message_bits list
-                message_bits.append((frame >> i) & 1)
-
-        # Convert the list of bits to bytes
-        message_bytes = bytearray()
-        for i in range(0, len(message_bits), 8):
-            byte = 0
-            for j in range(8):
-                byte = (byte << 1) | message_bits[i + j]
-            message_bytes.append(byte)
-
-        # Convert the bytes to a string (assuming the message is ASCII characters)
-        message = message_bytes.decode('ascii', errors='replace')
-
-        return message
-    except Exception as e:
-        print("Error extracting message from WAV:", e)
-        return None
-
-def inspect_wav_frames(wav_file_path):
-    try:
-        # Open the WAV file
-        with wave.open(wav_file_path, 'rb') as wav_file:
-            # Get the number of frames in the WAV file
-            num_frames = wav_file.getnframes()
-
-            # Read all frames
-            frames = wav_file.readframes(num_frames)
-
-        return frames
-    except Exception as e:
-        print("Error inspecting WAV frames:", e)
-        return None
-    
-def extract_message_from_high_frequency_wav(wav_file_path):
-    try:
-        # Open the WAV file
-        with wave.open(wav_file_path, 'rb') as wav_file:
-            # Get the audio sample rate
-            sample_rate = wav_file.getframerate()
-
-            # Read all frames
-            frames = wav_file.readframes(wav_file.getnframes())
-
-        # Convert frames to a NumPy array of samples
-        samples = np.frombuffer(frames, dtype=np.int16)
-
-        # Extract the high-frequency components (14.5kHz - 16.0kHz)
-        low_cutoff = int(14.5e3 * len(samples) / sample_rate)
-        high_cutoff = int(16.0e3 * len(samples) / sample_rate)
-
-        # Use a fixed buffer size (adjust as needed)
-        buffer_size = 1024
-        high_frequency_samples = samples[low_cutoff:low_cutoff + buffer_size]
-
-        # Extract the LSBs from high-frequency samples
-        message_bits = []
-        for sample in high_frequency_samples:
-            for i in range(8):
-                message_bits.append((sample >> i) & 1)
-
-        # Convert the list of bits to bytes
-        message_bytes = bytearray()
-        for i in range(0, len(message_bits), 8):
-            byte = 0
-            for j in range(8):
-                byte = (byte << 1) | message_bits[i + j]
-            message_bytes.append(byte)
-
-        # Convert the bytes to a string (assuming the message is ASCII characters)
-        message = message_bytes.decode('ascii', errors='replace')
-
-        return message
-    except Exception as e:
-        print("Error extracting message from WAV:", e)
-        return None
-
-def extract_message_from_lsb_wav(wav_file_path):
-    try:
-        # Open the WAV file
-        with wave.open(wav_file_path, 'rb') as wav_file:
-            # Get the audio sample rate
-            sample_rate = wav_file.getframerate()
-
-            # Read all frames
-            frames = wav_file.readframes(wav_file.getnframes())
-
-        # Convert frames to a NumPy array of samples
-        samples = np.frombuffer(frames, dtype=np.uint8)  # Use uint8 for 8 bits per sample
-
-        # Extract the LSBs from audio samples
-        message_bits = []
-        for sample in samples:
-            for i in range(8):
-                message_bits.append((sample >> i) & 1)
-
-        # Convert the list of bits to bytes
-        message_bytes = bytearray()
-        for i in range(0, len(message_bits), 8):
-            byte = 0
-            for j in range(8):
-                byte = (byte << 1) | message_bits[i + j]
-            message_bytes.append(byte)
-
-        # Convert the bytes to a string (assuming the message is ASCII characters)
-        message = message_bytes.decode('ascii', errors='replace')
-
-        return message
-    except Exception as e:
-        print("Error extracting message from WAV:", e)
-        return None
-
 def plot_audio_spectrum(wav_file_path, time_range=None, frequency_range=None, nfft=1024, cmap='viridis'):
     # Open the WAV file
     with wave.open(wav_file_path, 'rb') as wav_file:
@@ -316,9 +188,6 @@ for i in range(6, 7):
         # print(resp.content)
         if 'hash' in h: hashes[level] = h['hash']
     elif level == 5:
-        # guess = input("Input guess here: ")
-        # guess = "IDK"
-        # h = solve(level, guess)
         challenge_text = data['challenge']
         file_path = "challenge_text.txt"
         with open(file_path, 'w') as file:
@@ -327,26 +196,12 @@ for i in range(6, 7):
             encoded_wav_data = file.read()[22:]
         # Decode the base64 data
         decoded_wav_data = base64.b64decode(encoded_wav_data)
-        # lsb_try = "lsb_file.txt"
-        # with open(lsb_try, "wb") as lsb_file:
-        #      lsb_file.write("Hi")
+
         output_wav_path = "output.wav"
         with open(output_wav_path, "wb") as wav_file:
             wav_file.write(decoded_wav_data)
-        output_txt_path = "output.txt"
-        with open(output_txt_path, "wb") as txt_file:
-            txt_file.write(decoded_wav_data)
 
-        # print(output_wav_path)
-
-        # a_temp_var = extract_message_from_lsb_wav(output_wav_path)
-        # a_temp_var = extract_message_from_high_frequency_wav(output_wav_path)
-        # a_temp_var = extract_message_from_wav(output_wav_path)
-        # wav_frames = inspect_wav_frames(output_wav_path)
-        # print("The message: ")
-        # print(a_temp_var + "\nThis is the thing for sure")
         plot_audio_spectrum(output_wav_path, time_range=(0, 27), frequency_range=(14500, 16000))  # Adjust the ranges as neede
-        # print(wav_frames)
         guess = input("Put guess here: ")
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
