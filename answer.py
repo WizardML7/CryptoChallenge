@@ -4,6 +4,8 @@ import base64
 import wave
 import numpy as np
 import matplotlib.pyplot as plt
+from datetime import datetime
+import time
 
 # Global values
 base = "http://crypto.praetorian.com/{}"
@@ -152,6 +154,81 @@ def plot_audio_spectrum(wav_file_path, time_range=None, frequency_range=None, nf
 
     plt.show()
 
+def guess_time_measure(starting_letter,starting_time):
+    time.sleep(.5)
+    the_word = starting_letter
+    current_time = starting_time
+    count = 0
+    max_time_diff = 0
+    while True:
+        for letter_ascii in range(ord('a'), ord('z')+1):
+            count += 1
+            current_guess = the_word + chr(letter_ascii)
+            start = datetime.now()
+            h = solve(level, current_guess)
+            end = datetime.now()
+            total_time = (end - start).total_seconds()
+            time_diff = total_time - current_time
+            print("The current word: " + current_guess)
+            print(time_diff)
+            print()
+
+            if time_diff > max_time_diff:
+                    max_time_diff = time_diff
+                    best_letter = chr(letter_ascii)
+
+            if count % 26 == 0:
+                the_word += best_letter
+                print(the_word)
+                max_time_diff = 0
+                    # next_letter = input("Enter in next letter here: ")
+                    # if next_letter != "1":  
+                    #     the_word += next_letter
+                    #     print(the_word)
+
+            # if 0.05 <= time_diff <= 0.14:
+            #     the_word += chr(letter_ascii)
+            #     current_time = total_time
+            #     continue
+            time.sleep(.5)
+
+        zero_or_one = input("Input 0 to search capital letters and 1 to skip: ")
+
+        if zero_or_one == "0":
+            for letter_ascii in range(ord('A'), ord('Z')+1):
+                count += 1
+                current_guess = the_word + chr(letter_ascii)
+                start = datetime.now()
+                h = solve(level, current_guess)
+                end = datetime.now()
+                time_diff = total_time - current_time
+                print("The current word: " + current_guess)
+                print(time_diff)
+                print()
+
+                if time_diff > max_time_diff:
+                    max_time_diff = time_diff
+                    best_letter = chr(letter_ascii)
+
+                if count % 26 == 0:
+                    the_word += best_letter
+                    print(the_word)
+                    max_time_diff = 0
+                    # next_letter = input("Enter in next letter here: ")
+                    # if next_letter != "1": 
+                    #     the_word += next_letter
+                    #     print(the_word)
+
+                # if 0.05 <= time_diff <= 0.14:
+                #     the_word += chr(letter_ascii)
+                #     current_time = total_time
+                #     continue
+                time.sleep(.5)
+             
+        if 'hash' in h: 
+            hashes[level] = h['hash']
+            break
+
 hashes = {}
 
 for i in range(6, 7):
@@ -206,7 +283,16 @@ for i in range(6, 7):
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
     elif level == 6:
-        print("Placeholder")
+        starting_letter = input("Put starting_letter here: ")
+        start = datetime.now()
+        h = solve(level, starting_letter)
+        end = datetime.now()
+        total_time = (end - start).total_seconds()
+        print(total_time)
+
+
+        guess_time_measure(starting_letter,total_time)
+
     elif level == 7:
         print("Placeholder")
     elif level == 8:
@@ -226,8 +312,8 @@ for i in range(6, 7):
 for k,v in hashes.items():
 	print("Level {}: {}".format(k, v))
      
-url = "http://crypto.praetorian.com/hash"
-resp = requests.get(url, headers=token(email))
-resp.close()
-print(resp.content)
+# url = "http://crypto.praetorian.com/hash"
+# resp = requests.get(url, headers=token(email))
+# resp.close()
+# print(resp.content)
     
