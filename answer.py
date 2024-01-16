@@ -161,6 +161,7 @@ def guess_time_measure(starting_letter,starting_time):
     count = 0
     max_time_diff = 0
     while True:
+        best_letter = ""
         for letter_ascii in range(ord('a'), ord('z')+1):
             count += 1
             current_guess = the_word + chr(letter_ascii)
@@ -169,17 +170,18 @@ def guess_time_measure(starting_letter,starting_time):
             end = datetime.now()
             total_time = (end - start).total_seconds()
             time_diff = total_time - current_time
-            print("The current word: " + current_guess)
-            print(time_diff)
-            print()
+            # print("The current word: " + current_guess)
+            # print(time_diff)
+            # print()
 
             if time_diff > max_time_diff:
-                    max_time_diff = time_diff
-                    best_letter = chr(letter_ascii)
+                max_time_diff = time_diff
+                best_letter = chr(letter_ascii)
+            
 
             if count % 26 == 0:
                 the_word += best_letter
-                print(the_word)
+                # print(the_word)
                 max_time_diff = 0
                     # next_letter = input("Enter in next letter here: ")
                     # if next_letter != "1":  
@@ -192,38 +194,56 @@ def guess_time_measure(starting_letter,starting_time):
             #     continue
             time.sleep(.5)
 
+        print(the_word)
+
+        continue_with_word = input("Input 0 to continue with word and 1 to skip: ")
+
+        if continue_with_word == "1":
+            break
+
+        print()
+
         zero_or_one = input("Input 0 to search capital letters and 1 to skip: ")
+
+        # zero_or_one = "1"
 
         if zero_or_one == "0":
             for letter_ascii in range(ord('A'), ord('Z')+1):
-                count += 1
-                current_guess = the_word + chr(letter_ascii)
+                recursive_starting_letter = the_word + chr(letter_ascii)
                 start = datetime.now()
-                h = solve(level, current_guess)
+                h = solve(level, recursive_starting_letter)
                 end = datetime.now()
-                time_diff = total_time - current_time
-                print("The current word: " + current_guess)
-                print(time_diff)
-                print()
+                total_time = (end - start).total_seconds()
+                guess_time_measure(recursive_starting_letter,total_time)
 
-                if time_diff > max_time_diff:
-                    max_time_diff = time_diff
-                    best_letter = chr(letter_ascii)
+                # count += 1
+                # current_guess = the_word + chr(letter_ascii)
+                # start = datetime.now()
+                # h = solve(level, current_guess)
+                # end = datetime.now()
+                # time_diff = total_time - current_time
+                # print("The current word: " + current_guess)
+                # print(time_diff)
+                # print()
 
-                if count % 26 == 0:
-                    the_word += best_letter
-                    print(the_word)
-                    max_time_diff = 0
-                    # next_letter = input("Enter in next letter here: ")
-                    # if next_letter != "1": 
-                    #     the_word += next_letter
-                    #     print(the_word)
+                # if time_diff > max_time_diff:
+                #     max_time_diff = time_diff
+                #     best_letter = chr(letter_ascii)
 
-                # if 0.05 <= time_diff <= 0.14:
-                #     the_word += chr(letter_ascii)
-                #     current_time = total_time
-                #     continue
-                time.sleep(.5)
+                # if count % 26 == 0:
+                #     the_word += best_letter
+                #     print(the_word)
+                #     max_time_diff = 0
+                #     # next_letter = input("Enter in next letter here: ")
+                #     # if next_letter != "1": 
+                #     #     the_word += next_letter
+                #     #     print(the_word)
+
+                # # if 0.05 <= time_diff <= 0.14:
+                # #     the_word += chr(letter_ascii)
+                # #     current_time = total_time
+                # #     continue
+                # time.sleep(.5)
              
         if 'hash' in h: 
             hashes[level] = h['hash']
@@ -231,9 +251,10 @@ def guess_time_measure(starting_letter,starting_time):
 
 hashes = {}
 
-for i in range(6, 7):
+for i in range(7, 8):
     level = i
     data = fetch(level)
+    # data = 'hi'
 
     if level == 0:
         guess = data['challenge']
@@ -312,8 +333,8 @@ for i in range(6, 7):
 for k,v in hashes.items():
 	print("Level {}: {}".format(k, v))
      
-# url = "http://crypto.praetorian.com/hash"
-# resp = requests.get(url, headers=token(email))
-# resp.close()
-# print(resp.content)
+url = "http://crypto.praetorian.com/hash"
+resp = requests.get(url, headers=token(email))
+resp.close()
+print(resp.content)
     
