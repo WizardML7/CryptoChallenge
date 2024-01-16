@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 import time
+import random
 
 # Global values
 base = "http://crypto.praetorian.com/{}"
@@ -315,9 +316,23 @@ for i in range(7, 8):
         guess_time_measure(starting_letter,total_time)
 
     elif level == 7:
+        #hex(msg)+":"+mac(msg)}\n
+        #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
+        #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
         print("Placeholder")
+        hex_msg = hash(hex(12648430))
+        mac_msg = str(random.getrandbits(256)) + "username=admin"
+        mac_msg = hash(mac_msg)
+        guess = str(hex_msg) + ":" + str(mac_msg)
+        print(guess)
+        
+        h = solve(level, guess)
+        print(h)
+        if 'hash' in h: hashes[level] = h['hash']
     elif level == 8:
         print("Placeholder")
+        h = solve(level, guess)
+        if 'hash' in h: hashes[level] = h['hash']
 
         # url = "http://crypto.praetorian.com/hash"
         # resp = requests.get(url, headers=token(email))
