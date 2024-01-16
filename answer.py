@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import time
 import random
+import hmac
+import hashlib
 
 # Global values
 base = "http://crypto.praetorian.com/{}"
@@ -319,11 +321,29 @@ for i in range(7, 8):
         #hex(msg)+":"+mac(msg)}\n
         #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
         #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
+
+        # Your secret key
+        # secret_key = b'secret_key'
+        secret_key_int = random.getrandbits(256)
+
+        secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+
+        # Message to be authenticated
+        message = b'Hello, HMAC!'
+
+        # Create an HMAC object with the secret key and hash function (SHA-256 in this case)
+        hmac_obj = hmac.new(secret_key_bytes, message, hashlib.sha256)
+
+        # Get the HMAC digest
+        digest = hmac_obj.digest()
+        print(digest)
+
         print("Placeholder")
-        hex_msg = hash(hex(12648430))
+        hex_msg = hex(b'username')
         mac_msg = str(random.getrandbits(256)) + "username=admin"
         mac_msg = hash(mac_msg)
-        guess = str(hex_msg) + ":" + str(mac_msg)
+        guess = str(hex_msg) + ":" + str(digest)
         print(guess)
         
         h = solve(level, guess)
