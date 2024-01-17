@@ -322,28 +322,108 @@ for i in range(7, 8):
         #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
         #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
 
-        # Your secret key
-        # secret_key = b'secret_key'
+        # Your username prefix
+        username_prefix = "user"
+
+        # Prompt for the target HMAC digest
+        in_here = input("Enter target HMAC digest: ")
+
+        count = 0
+        max_iterations = 1000  # Set a maximum number of iterations
+
+        while count < max_iterations:
+            random.seed(count)
+
+            # Your username
+            username = "user=admin"
+
+            # Convert the username to bytes
+            username_bytes = username.encode('utf-8')
+
+            # Convert the username to its hex representation
+            username_hex = username_bytes.hex()
+
+            # Generate a random 256-bit integer as the secret key
+            secret_key_int = random.getrandbits(256)
+
+            # Convert the integer to bytes
+            secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+            # Create an HMAC object with the secret key and hash function (SHA-256)
+            hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+
+            # Get the HMAC digest
+            digest = hmac_obj.digest()
+
+            # Convert the digest to its hex representation
+            digest_hex = digest.hex()
+
+            guess = username_hex + ":"
+            
+            guess += digest_hex
+
+            # print(guess)
+            
+            h = solve(level, guess)
+            
+            if 'hash' in h: hashes[level] = h['hash']
+
+            # for i in range(100000):
+            #     # Generate a username with the current index
+            #     username = f"{username_prefix}{i:05}"
+
+            #     # Convert the username to bytes
+            #     username_bytes = username.encode('utf-8')
+
+            #     # Generate a random 256-bit integer as the secret key
+            #     secret_key_int = random.getrandbits(256)
+
+            #     # Convert the integer to bytes
+            #     secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+            #     # Create an HMAC object with the secret key and hash function (MD5)
+            #     hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+
+            #     # Get the HMAC digest
+            #     digest = hmac_obj.digest()
+
+            #     # Convert the digest to its hex representation
+            #     digest_hex = digest.hex()
+
+            #     if digest_hex == in_here:
+            #         print(f"SUCCESS - Found HMAC at count: {count}, index: {i}")
+            #         exit(0)
+
+            count += 1
+
+        # Your username
+        username = "admin"
+
+        # Convert the username to bytes
+        username_bytes = username.encode('utf-8')
+
+        # Convert the username to its hex representation
+        username_hex = username_bytes.hex()
+
+        # Generate a random 256-bit integer as the secret key
         secret_key_int = random.getrandbits(256)
 
+        # Convert the integer to bytes
         secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
 
-
-        # Message to be authenticated
-        message = b'Hello, HMAC!'
-
-        # Create an HMAC object with the secret key and hash function (SHA-256 in this case)
-        hmac_obj = hmac.new(secret_key_bytes, message, hashlib.sha256)
+        # Create an HMAC object with the secret key and hash function (SHA-256)
+        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
 
         # Get the HMAC digest
         digest = hmac_obj.digest()
-        print(digest)
 
-        print("Placeholder")
-        hex_msg = hex(b'username')
-        mac_msg = str(random.getrandbits(256)) + "username=admin"
-        mac_msg = hash(mac_msg)
-        guess = str(hex_msg) + ":" + str(digest)
+        # Convert the digest to its hex representation
+        digest_hex = digest.hex()
+
+        guess = username_hex + ":"
+        
+        guess += digest_hex
+
         print(guess)
         
         h = solve(level, guess)
