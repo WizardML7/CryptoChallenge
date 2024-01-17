@@ -252,6 +252,44 @@ def guess_time_measure(starting_letter,starting_time):
             hashes[level] = h['hash']
             break
 
+def xor_hex_strings(hex_str1, hex_str2):
+    # Convert hexadecimal strings to integers
+    int_val1 = int(hex_str1, 16)
+    int_val2 = int(hex_str2, 16)
+
+    # Perform XOR operation
+    result_int = int_val1 ^ int_val2
+
+    # Convert the result back to a hexadecimal string
+    result_hex_str = hex(result_int)[2:]
+
+    # Ensure the result has the correct length (padding with zeros if needed)
+    result_hex_str = result_hex_str.zfill(len(hex_str1))
+
+    return result_hex_str
+
+def md5_length_extension_attack(original_message, hash_value, appended_data):
+    # Obtain the length of the original message
+    original_length = len(original_message)
+
+    # Construct the padding for the original message
+    padding = b'\x80' + b'\x00' * ((64 - (original_length + 9) % 64) % 64)
+
+    # Append the length of the original message (in bits) to the padding
+    padded_message = original_message + padding + (original_length * 8).to_bytes(8, 'little')
+
+    # Create an MD5 object and set its state to the known hash value
+    md5_obj = hashlib.md5()
+    md5_obj._update(padded_message, hash_value, len(original_message))
+
+    # Continue hashing with the appended data
+    md5_obj._update(appended_data)
+
+    # Obtain the final hash value
+    new_hash_value = md5_obj.digest()
+
+    return new_hash_value
+
 hashes = {}
 
 for i in range(7, 8):
@@ -322,82 +360,8 @@ for i in range(7, 8):
         #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
         #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
 
-        # Your username prefix
-        username_prefix = "user"
-
-        # Prompt for the target HMAC digest
-        in_here = input("Enter target HMAC digest: ")
-
-        count = 0
-        max_iterations = 1000  # Set a maximum number of iterations
-
-        while count < max_iterations:
-            random.seed(count)
-
-            # Your username
-            username = "user=admin"
-
-            # Convert the username to bytes
-            username_bytes = username.encode('utf-8')
-
-            # Convert the username to its hex representation
-            username_hex = username_bytes.hex()
-
-            # Generate a random 256-bit integer as the secret key
-            secret_key_int = random.getrandbits(256)
-
-            # Convert the integer to bytes
-            secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
-
-            # Create an HMAC object with the secret key and hash function (SHA-256)
-            hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
-
-            # Get the HMAC digest
-            digest = hmac_obj.digest()
-
-            # Convert the digest to its hex representation
-            digest_hex = digest.hex()
-
-            guess = username_hex + ":"
-            
-            guess += digest_hex
-
-            # print(guess)
-            
-            h = solve(level, guess)
-            
-            if 'hash' in h: hashes[level] = h['hash']
-
-            # for i in range(100000):
-            #     # Generate a username with the current index
-            #     username = f"{username_prefix}{i:05}"
-
-            #     # Convert the username to bytes
-            #     username_bytes = username.encode('utf-8')
-
-            #     # Generate a random 256-bit integer as the secret key
-            #     secret_key_int = random.getrandbits(256)
-
-            #     # Convert the integer to bytes
-            #     secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
-
-            #     # Create an HMAC object with the secret key and hash function (MD5)
-            #     hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
-
-            #     # Get the HMAC digest
-            #     digest = hmac_obj.digest()
-
-            #     # Convert the digest to its hex representation
-            #     digest_hex = digest.hex()
-
-            #     if digest_hex == in_here:
-            #         print(f"SUCCESS - Found HMAC at count: {count}, index: {i}")
-            #         exit(0)
-
-            count += 1
-
         # Your username
-        username = "admin"
+        username = "username=user00000"
 
         # Convert the username to bytes
         username_bytes = username.encode('utf-8')
@@ -405,23 +369,36 @@ for i in range(7, 8):
         # Convert the username to its hex representation
         username_hex = username_bytes.hex()
 
-        # Generate a random 256-bit integer as the secret key
-        secret_key_int = random.getrandbits(256)
+        # guess = username_hex + ":"
+        
+        in_here = input("Enter here: ")
 
-        # Convert the integer to bytes
-        secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+        rev_hmac_for_key = xor_hex_strings(username_hex,in_here)
 
-        # Create an HMAC object with the secret key and hash function (SHA-256)
-        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+        #After reversing Key
+        username = "username=admin"
 
-        # Get the HMAC digest
-        digest = hmac_obj.digest()
+        # Convert the username to bytes
+        username_bytes = username.encode('utf-8')
 
-        # Convert the digest to its hex representation
-        digest_hex = digest.hex()
+        # Convert the username to its hex representation
+        username_hex = username_bytes.hex()
 
         guess = username_hex + ":"
-        
+
+        secret_key_bytes = bytes.fromhex(rev_hmac_for_key)
+
+        #Create an HMAC object with the secret key and hash function (MD5)
+        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.sha1)
+
+            # Get the HMAC digest
+        digest = hmac_obj.digest()
+
+            #     # Convert the digest to its hex representation
+        digest_hex = digest.hex()
+
+        # compute_hmac = xor_hex_strings(rev_hmac_for_key,username_hex)
+
         guess += digest_hex
 
         print(guess)
