@@ -268,8 +268,8 @@ def xor_hex_strings(hex_str1, hex_str2):
 
     return result_hex_str
 
-def md5_length_extension_attack(original_message, hash_value, appended_data):
-    # Obtain the length of the original message
+def md5_length_extension_attack(original_message, known_hash_value, appended_data):
+    # Known length of the original message
     original_length = len(original_message)
 
     # Construct the padding for the original message
@@ -278,17 +278,91 @@ def md5_length_extension_attack(original_message, hash_value, appended_data):
     # Append the length of the original message (in bits) to the padding
     padded_message = original_message + padding + (original_length * 8).to_bytes(8, 'little')
 
-    # Create an MD5 object and set its state to the known hash value
-    md5_obj = hashlib.md5()
-    md5_obj._update(padded_message, hash_value, len(original_message))
+    # Calculate the HMAC using the known hash value as the key
+    hmac_obj = hmac.new(known_hash_value, msg=padded_message, digestmod=hashlib.md5)
 
     # Continue hashing with the appended data
-    md5_obj._update(appended_data)
+    hmac_obj.update(appended_data)
 
     # Obtain the final hash value
-    new_hash_value = md5_obj.digest()
+    new_hash_value = hmac_obj.digest()
 
     return new_hash_value
+
+def sha1_length_extension_attack(original_message, known_hash_value, appended_data):
+    # Known length of the original message
+    original_length = len(original_message)
+
+    # Construct the padding for the original message
+    padding = b'\x80' + b'\x00' * ((64 - (original_length + 9) % 64) % 64)
+
+    # Append the length of the original message (in bits) to the padding
+    padded_message = original_message + padding + (original_length * 8).to_bytes(8, 'big')
+
+    # Calculate the HMAC using the known hash value as the key
+    hmac_obj = hmac.new(known_hash_value, msg=padded_message, digestmod=hashlib.sha1)
+
+    # Continue hashing with the appended data
+    hmac_obj.update(appended_data)
+
+    # Obtain the final hash value
+    new_hash_value = hmac_obj.digest()
+
+    return new_hash_value
+
+def sha256_length_extension_attack(original_message, known_hmac, appended_data):
+    # Known length of the original message
+    original_length = len(original_message)
+
+    # Construct the padding for the original message
+    padding = b'\x80' + b'\x00' * ((64 - (original_length + 9) % 64) % 64)
+
+    # Append the length of the original message (in bits) to the padding
+    padded_message = original_message + padding + (original_length * 8).to_bytes(8, 'big')
+
+    # Calculate the HMAC using the known HMAC as the key
+    hmac_obj = hmac.new(known_hmac, msg=padded_message, digestmod=hashlib.sha256)
+
+    # Continue hashing with the appended data
+    hmac_obj.update(appended_data)
+
+    # Obtain the final hash value
+    new_hmac = hmac_obj.digest()
+
+    return new_hmac
+
+def md5_brute_force():
+    count = 0
+    max_iterations = 1000  # Set a maximum number of iterations
+
+    username = "username=admin"
+
+    username_bytes = username.encode('utf-8')
+
+    username_hex = username_bytes.hex()
+
+    while count < max_iterations:
+        random.seed(count)
+
+        secret_key_int = random.getrandbits(256)
+
+        secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+
+        # Get the HMAC digest
+        digest = hmac_obj.digest()
+        digest_hex = digest.hex()
+
+        guess = username_hex + ":"
+
+        guess += digest_hex
+
+        h = solve(level, guess)
+        if 'hash' in h: hashes[level] = h['hash']
+
+
+
 
 hashes = {}
 
@@ -360,48 +434,34 @@ for i in range(7, 8):
         #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
         #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
 
-        # Your username
-        username = "username=user00000"
+        # Known original message
+        original_message = b'username=user00000'
 
-        # Convert the username to bytes
-        username_bytes = username.encode('utf-8')
+        # Known hash value (input manually)
+        # known_hash_value_hex = input("Enter the known hash value (hex): ")
+        # known_hash_value = bytes.fromhex(known_hash_value_hex)
 
-        # Convert the username to its hex representation
-        username_hex = username_bytes.hex()
+        # Known HMAC (input manually)
+        known_hmac_hex = input("Enter the known HMAC value (hex): ")
+        known_hmac = bytes.fromhex(known_hmac_hex)
 
-        # guess = username_hex + ":"
-        
-        in_here = input("Enter here: ")
+        # Data to be appended
+        appended_data = b'username=admin'
 
-        rev_hmac_for_key = xor_hex_strings(username_hex,in_here)
+        # Perform length extension attack
+        new_hmac = md5_length_extension_attack(original_message, known_hmac, appended_data)
+        #new_hmac = sha1_length_extension_attack(original_message, known_hmac, appended_data)
+        #new_hmac = sha256_length_extension_attack(original_message, known_hmac, appended_data)
 
-        #After reversing Key
-        username = "username=admin"
 
-        # Convert the username to bytes
-        username_bytes = username.encode('utf-8')
+        # Display results
+        print(f'Original Message: {original_message.decode()}')
+        print(f'Known Hash Value: {known_hmac_hex}')
+        print(f'Appended Data: {appended_data.decode()}')
+        print(f'Extended Hash: {new_hmac.hex()}')
 
-        # Convert the username to its hex representation
-        username_hex = username_bytes.hex()
-
-        guess = username_hex + ":"
-
-        secret_key_bytes = bytes.fromhex(rev_hmac_for_key)
-
-        #Create an HMAC object with the secret key and hash function (MD5)
-        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.sha1)
-
-            # Get the HMAC digest
-        digest = hmac_obj.digest()
-
-            #     # Convert the digest to its hex representation
-        digest_hex = digest.hex()
-
-        # compute_hmac = xor_hex_strings(rev_hmac_for_key,username_hex)
-
-        guess += digest_hex
-
-        print(guess)
+        guess = "757365726e616d653d757365723030303030757365726e616d653d61646d696e:" + new_hmac.hex()
+        print(f'Crafted Guess: {guess}')
         
         h = solve(level, guess)
         print(h)
