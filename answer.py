@@ -360,6 +360,7 @@ def md5_brute_force():
 
         h = solve(level, guess)
         if 'hash' in h: hashes[level] = h['hash']
+        count += 1
 
 
 
@@ -433,7 +434,7 @@ for i in range(7, 8):
         #hex(msg)+":"+mac(msg)}\n
         #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
         #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
-
+        md5_brute_force()
         # Known original message
         original_message = b'username=user00000'
 
