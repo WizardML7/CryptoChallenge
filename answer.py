@@ -362,7 +362,19 @@ def md5_brute_force():
         if 'hash' in h: hashes[level] = h['hash']
         count += 1
 
+def predict_next_key(hmac_hexdigest, message, key_size):
+    # Attempt to predict the next key based on the known HMAC hexdigest
+    known_hmac = bytes.fromhex(hmac_hexdigest)
+    known_message = message.encode()
 
+    for potential_key in range(2 ** key_size):
+        potential_key_bytes = potential_key.to_bytes((key_size + 7) // 8, byteorder='big')
+        potential_hmac = hmac.new(potential_key_bytes, known_message, hashlib.md5).hexdigest()
+
+        if potential_hmac == known_hmac:
+            return potential_key
+
+    return None
 
 
 hashes = {}
@@ -434,9 +446,12 @@ for i in range(7, 8):
         #hex(msg)+":"+mac(msg)}\n
         #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
         #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
-        md5_brute_force()
+        # md5_brute_force()
+
+        # predict_next_key()
+
         # Known original message
-        original_message = b'username=user00000'
+        original_message = 'username=user00000'
 
         # Known hash value (input manually)
         # known_hash_value_hex = input("Enter the known hash value (hex): ")
@@ -446,22 +461,24 @@ for i in range(7, 8):
         known_hmac_hex = input("Enter the known HMAC value (hex): ")
         known_hmac = bytes.fromhex(known_hmac_hex)
 
+        #predicted_key = predict_next_key(known_hmac_hex,original_message,256)
+
         # Data to be appended
-        appended_data = b'username=admin'
+        #appended_data = b'username=admin'
 
         # Perform length extension attack
-        new_hmac = md5_length_extension_attack(original_message, known_hmac, appended_data)
+        #new_hmac = md5_length_extension_attack(original_message, known_hmac, appended_data)
         #new_hmac = sha1_length_extension_attack(original_message, known_hmac, appended_data)
         #new_hmac = sha256_length_extension_attack(original_message, known_hmac, appended_data)
 
 
         # Display results
-        print(f'Original Message: {original_message.decode()}')
-        print(f'Known Hash Value: {known_hmac_hex}')
-        print(f'Appended Data: {appended_data.decode()}')
-        print(f'Extended Hash: {new_hmac.hex()}')
+        # print(f'Original Message: {original_message.decode()}')
+        # print(f'Known Hash Value: {known_hmac_hex}')
+        # print(f'Appended Data: {appended_data.decode()}')
+        # print(f'Extended Hash: {new_hmac.hex()}')
 
-        guess = "757365726e616d653d757365723030303030757365726e616d653d61646d696e:" + new_hmac.hex()
+        guess = "757365726e616d653d61646d696e:" + known_hmac_hex
         print(f'Crafted Guess: {guess}')
         
         h = solve(level, guess)
