@@ -9,6 +9,8 @@ import time
 import random
 import hmac
 import hashlib
+import z3
+import struct
 
 # Global values
 base = "http://crypto.praetorian.com/{}"
@@ -376,6 +378,58 @@ def predict_next_key(hmac_hexdigest, message, key_size):
 
     return None
 
+def predict_next_random_sequence_256(sequence):
+    solver = z3.Solver()
+
+    # Create 64 bit states, BitVec (uint64_t)
+    se_state0, se_state1, se_state2, se_state3 = z3.BitVecs("se_state0 se_state1 se_state2 se_state3", 64)
+
+    for i in range(len(sequence)):
+        se_s3 = se_state0
+        se_s2 = se_state1
+        se_s1 = se_state2
+        se_s0 = se_state3
+        se_state0 = se_s0
+        se_s3 ^= se_s3 << 23
+        se_s3 ^= z3.LShR(se_s3, 17)
+        se_s3 ^= se_s2
+        se_s3 ^= z3.LShR(se_s2, 26)
+        se_state1 = se_s3
+
+        se_s2 = se_state0
+        se_state2 = se_s1
+
+        se_s1 = se_state3
+        se_state3 = se_s0
+
+        se_s0 = se_state2
+        se_state2 = se_s0
+
+        # Pack as `double` and re-interpret as unsigned `long long` (little endian)
+        float_64 = struct.pack("d", sequence[i])
+        u_long_long_64 = struct.unpack("<Q", float_64)[0]
+
+        # Compare entire 64-bit values
+        solver.add(z3.BitVecVal(u_long_long_64 & 0xFFFFFFFFFFFFFFFF, 64) == se_state3)
+
+    if solver.check() == z3.sat:
+        model = solver.model()
+
+        states = {}
+        for state in model.decls():
+            states[state.__str__()] = model[state]
+
+        state0 = states["se_state0"].as_long()
+
+        # Extract mantissa
+        u_long_long_64 = (state0 >> 12) | 0x3FF0000000000000
+        float_64 = struct.pack("<Q", u_long_long_64)
+        next_sequence = struct.unpack("d", float_64)[0]
+
+        return next_sequence
+    else:
+        return None
+    
 
 hashes = {}
 
@@ -450,12 +504,18 @@ for i in range(7, 8):
         #  HMAC(256-bit-key, \'username=user00000\') = 07589ba60627603552d929e6b15a1227', 
         # 'hint': 'NotImplementedError: /dev/urandom (or equivalent) not found... 
         #  key = random.getrandbits(256)...', 'level': '7'}
+        random.seed(1)
+        # for i in range(20001):
+        #     print(random.getrandbits(256))
 
-        md5_brute_force()
-        #hex(msg)+":"+mac(msg)}\n
-        #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
-        #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
-        # md5_brute_force()
+        # Example usage with a sequence generated using random.getrandombits
+        random_sequence_256 = [random.getrandbits(256) for _ in range(5)]  # Use a longer sequence
+        predicted_next_sequence_256 = predict_next_random_sequence_256(random_sequence_256)
+
+        print(f"Original Sequence: {random_sequence_256}")
+        print(f"Predicted Next Sequence: {predicted_next_sequence_256}")
+
+        #md5_brute_force()
 
         # predict_next_key()
 
