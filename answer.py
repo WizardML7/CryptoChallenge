@@ -504,6 +504,10 @@ for i in range(7, 8):
         #  HMAC(256-bit-key, \'username=user00000\') = 07589ba60627603552d929e6b15a1227', 
         # 'hint': 'NotImplementedError: /dev/urandom (or equivalent) not found... 
         #  key = random.getrandbits(256)...', 'level': '7'}
+
+        #Focus On finding BAD seed
+
+
         random.seed(1)
         # for i in range(20001):
         #     print(random.getrandbits(256))
