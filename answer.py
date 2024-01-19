@@ -431,9 +431,14 @@ for i in range(7, 8):
         guess_time_measure(starting_letter,total_time)
 
     elif level == 7:
-        #hex(msg)+":"+mac(msg)}\n
-        #{"guess": "757365726e616d653d757365723030303030:e4194b2cd2be5b8fb8b4962f14baa3f6"}\n\n
-        #HMAC(256-bit-key, \'username=user00000\') = e4194b2cd2be5b8fb8b4962f14baa3f6'
+        # {'challenge': 'I need to be an admin...
+        #  Submissions should be in the following form:
+        #  {"guess": hex(msg)+":"+mac(msg)}
+        # {"guess": "757365726e616d653d757365723030303030:07589ba60627603552d929e6b15a1227"}
+        #  HMAC(256-bit-key, \'username=user00000\') = 07589ba60627603552d929e6b15a1227', 
+        # 'hint': 'NotImplementedError: /dev/urandom (or equivalent) not found... 
+        #  key = random.getrandbits(256)...', 'level': '7'}
+
         md5_brute_force()
         # Known original message
         original_message = b'username=user00000'
