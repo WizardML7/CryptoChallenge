@@ -333,11 +333,11 @@ def sha256_length_extension_attack(original_message, known_hmac, appended_data):
 
     return new_hmac
 
-def md5_brute_force():
+def md5_brute_force(known_hmac_hex):
     count = 0
-    max_iterations = 1000  # Set a maximum number of iterations
+    max_iterations = 10000  # Set a maximum number of iterations
 
-    username = "username=admin"
+    username = "username=user00000"
 
     username_bytes = username.encode('utf-8')
 
@@ -345,23 +345,42 @@ def md5_brute_force():
 
     while count < max_iterations:
         random.seed(count)
+        for i in range(0,5000):
 
-        secret_key_int = random.getrandbits(256)
+            secret_key_int = random.getrandbits(256)
 
-        secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+            secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
 
-        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+            hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
 
-        # Get the HMAC digest
-        digest = hmac_obj.digest()
-        digest_hex = digest.hex()
+            # Get the HMAC digest
+            digest = hmac_obj.digest()
+            digest_hex = digest.hex()
 
-        guess = username_hex + ":"
+            if digest_hex == known_hmac_hex:
+                print("Found a match")
+                username = "username=admin"
 
-        guess += digest_hex
+                username_bytes = username.encode('utf-8')
 
-        h = solve(level, guess)
-        if 'hash' in h: hashes[level] = h['hash']
+                username_hex = username_bytes.hex()
+
+                secret_key_int = random.getrandbits(256)
+
+                secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+                hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+
+                # Get the HMAC digest
+                digest = hmac_obj.digest()
+                digest_hex = digest.hex()
+
+                guess = username_hex + ":"
+
+                guess += digest_hex
+
+                h = solve(level, guess)
+                if 'hash' in h: hashes[level] = h['hash']
         count += 1
 
 def predict_next_key(hmac_hexdigest, message, key_size):
@@ -508,18 +527,18 @@ for i in range(7, 8):
         #Focus On finding BAD seed
 
 
-        random.seed(1)
-        # for i in range(20001):
-        #     print(random.getrandbits(256))
+        # random.seed(1)
+        # # for i in range(20001):
+        # #     print(random.getrandbits(256))
 
-        # Example usage with a sequence generated using random.getrandombits
-        random_sequence_256 = [random.getrandbits(256) for _ in range(5)]  # Use a longer sequence
-        predicted_next_sequence_256 = predict_next_random_sequence_256(random_sequence_256)
+        # # Example usage with a sequence generated using random.getrandombits
+        # random_sequence_256 = [random.getrandbits(256) for _ in range(5)]  # Use a longer sequence
+        # predicted_next_sequence_256 = predict_next_random_sequence_256(random_sequence_256)
 
-        print(f"Original Sequence: {random_sequence_256}")
-        print(f"Predicted Next Sequence: {predicted_next_sequence_256}")
+        # print(f"Original Sequence: {random_sequence_256}")
+        # print(f"Predicted Next Sequence: {predicted_next_sequence_256}")
 
-        #md5_brute_force()
+        
 
         # predict_next_key()
 
@@ -534,6 +553,8 @@ for i in range(7, 8):
         known_hmac_hex = input("Enter the known HMAC value (hex): ")
         known_hmac = bytes.fromhex(known_hmac_hex)
 
+        md5_brute_force(known_hmac_hex)
+        
         #predicted_key = predict_next_key(known_hmac_hex,original_message,256)
 
         # Data to be appended
