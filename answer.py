@@ -449,11 +449,57 @@ def predict_next_random_sequence_256(sequence):
     else:
         return None
     
+def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
+    current_time = start_time
+
+    username = "username=user00000"
+
+    username_bytes = username.encode('utf-8')
+
+    username_hex = username_bytes.hex()
+
+    while current_time <= end_time:
+        seed = str(current_time).encode('utf-8')
+
+        hmac_obj = hmac.new(seed, username_bytes, hashlib.md5)
+
+        # Get the HMAC digest
+        digest = hmac_obj.digest()
+        digest_hex = digest.hex()
+
+        if digest_hex == known_hmac_hex:
+            print("Found a match")
+            username = "username=admin"
+
+            username_bytes = username.encode('utf-8')
+
+            username_hex = username_bytes.hex()
+            
+            secret_key_int = random.getrandbits(256)
+
+            secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+            hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+
+            # Get the HMAC digest
+            digest = hmac_obj.digest()
+            digest_hex = digest.hex()
+
+            guess = username_hex + ":"
+
+            guess += digest_hex
+
+            h = solve(level, guess)
+            if 'hash' in h: hashes[level] = h['hash']
+
+        current_time += 1
 
 hashes = {}
 
 for i in range(7, 8):
     level = i
+    start_time = int(time.time())
+    #current_time = str(time.time()).encode('utf-8')
     data = fetch(level)
     # data = 'hi'
 
@@ -524,7 +570,10 @@ for i in range(7, 8):
         # 'hint': 'NotImplementedError: /dev/urandom (or equivalent) not found... 
         #  key = random.getrandbits(256)...', 'level': '7'}
 
-        #Focus On finding BAD seed
+        #dd if=/dev/random bs=1 count=1
+        #dd if=/dev/urandom bs=1 count=1 | od -cx
+
+
 
 
         # random.seed(1)
@@ -538,22 +587,28 @@ for i in range(7, 8):
         # print(f"Original Sequence: {random_sequence_256}")
         # print(f"Predicted Next Sequence: {predicted_next_sequence_256}")
 
-        
+        # start = datetime.now()
+        # end = datetime.now()
+        # total_time = (end - start).total_seconds()
+
+        # start_time = int(time.time())
+        end_time = start_time + 36000
 
         # predict_next_key()
 
         # Known original message
         original_message = 'username=user00000'
 
-        # Known hash value (input manually)
-        # known_hash_value_hex = input("Enter the known hash value (hex): ")
-        # known_hash_value = bytes.fromhex(known_hash_value_hex)
+        #second_current_time = str(time.time()).encode('utf-8')
+        #end = datetime.now()
+        # total_time = (end - start).total_seconds()
 
         # Known HMAC (input manually)
         known_hmac_hex = input("Enter the known HMAC value (hex): ")
         known_hmac = bytes.fromhex(known_hmac_hex)
 
-        md5_brute_force(known_hmac_hex)
+        sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex)
+        # md5_brute_force(known_hmac_hex)
         
         #predicted_key = predict_next_key(known_hmac_hex,original_message,256)
 
