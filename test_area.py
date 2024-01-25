@@ -1,5 +1,6 @@
 import random
 import os
+import time
 
 # Check if /dev/urandom exists
 urandom_exists = os.path.exists("/dev/urandom")
@@ -12,10 +13,13 @@ if urandom_exists & random_exists:
 
     print("done")
 
+seed = time.time()
+r1 = random.SystemRandom(seed)
+
 try:
     # Attempt to use random functions
-    for i in range(100):
-        print(random.getrandbits(256)) 
+    for i in range(10):
+        print(r1.getrandbits(256)) 
 except NotImplementedError as e:
     print(f"Error: {e}")
 finally:
