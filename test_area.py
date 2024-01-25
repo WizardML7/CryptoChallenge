@@ -1,6 +1,8 @@
 import random
 import os
 import time
+from datetime import datetime
+
 
 # Check if /dev/urandom exists
 urandom_exists = os.path.exists("/dev/urandom")
@@ -14,12 +16,22 @@ if urandom_exists & random_exists:
     print("done")
 
 seed = time.time()
-r1 = random.SystemRandom(seed)
-
+random.SystemRandom().seed(seed)
+#random.SystemRandom.getstate()
+#1706213689.866557
+#0000000000.000001
 try:
     # Attempt to use random functions
-    for i in range(10):
-        print(r1.getrandbits(256)) 
+    current = datetime.now().timestamp()
+    random.seed(current)
+    print(random.getrandbits(256))
+    print("Random above sysrand below")
+    print(random.SystemRandom.getrandbits(256,256)) 
+    for i in range(600):
+        current = current + 0.000001
+        print(random.getrandbits(256))
+
+
 except NotImplementedError as e:
     print(f"Error: {e}")
 finally:

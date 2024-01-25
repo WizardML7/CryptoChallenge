@@ -459,7 +459,7 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
     username_hex = username_bytes.hex()
 
     while current_time <= end_time:
-        seed = str(current_time).encode('utf-8')
+        seed = current_time
         random.seed(seed)
 
         secret_key_int = random.getrandbits(256)
@@ -499,15 +499,16 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
             h = solve(level, guess)
             if 'hash' in h: hashes[level] = h['hash']
 
-        current_time += 1
+        current_time = current_time + 0.000001
 
 hashes = {}
 
 for i in range(7, 8):
     level = i
-    start_time = int(time.time())
+    start_time = datetime.now().timestamp()
     #current_time = str(time.time()).encode('utf-8')
     data = fetch(level)
+    end_time = datetime.now().timestamp()
     # data = 'hi'
 
     if level == 0:
@@ -612,9 +613,15 @@ for i in range(7, 8):
 
         # # Known HMAC (input manually)
         # known_hmac_hex = input("Enter the known HMAC value (hex): ")
-        # known_hmac = bytes.fromhex(known_hmac_hex)
+        # known_hmac = bytes.fromhex(known_hmac_hex)data['challenge'][152:184]
 
-        # sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex)
+        known_hmac_hex = data['challenge'][152:184]
+        print(start_time)
+        print(type(start_time))
+        end_time = end_time
+        print(end_time)
+        
+        sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex)
         # md5_brute_force(known_hmac_hex)
         
         #predicted_key = predict_next_key(known_hmac_hex,original_message,256)
@@ -637,7 +644,7 @@ for i in range(7, 8):
 
         # print(data['challenge'][152:184])
 
-        file_path = "collected_hmacs.txt"
+        #file_path = "collected_hmacs.txt"
         # with open(file_path, 'w') as file:
         #     for i in range(0,1000):
         #         file.write(data['challenge'][152:184])
@@ -646,27 +653,27 @@ for i in range(7, 8):
 
 
         # Read HMACs from the file
-        with open(file_path, 'r') as file:
-            hmacs = [line.strip() for line in file]
+        # with open(file_path, 'r') as file:
+        #     hmacs = [line.strip() for line in file]
 
-        # Set the number of HMACs to visualize in each graph
-        batch_size = 500
+        # # Set the number of HMACs to visualize in each graph
+        # batch_size = 500
 
-        # Split HMACs into batches
-        hmac_batches = [hmacs[i:i + batch_size] for i in range(0, len(hmacs), batch_size)]
+        # # Split HMACs into batches
+        # hmac_batches = [hmacs[i:i + batch_size] for i in range(0, len(hmacs), batch_size)]
 
-        # Visualize each batch separately
-        for i, hmac_batch in enumerate(hmac_batches):
-            plt.hist(hmac_batch, bins='auto')
-            plt.title(f"HMAC Distribution - Batch {i + 1}")
-            plt.xlabel("HMAC Values")
-            plt.ylabel("Frequency")
-            plt.show()
+        # # Visualize each batch separately
+        # for i, hmac_batch in enumerate(hmac_batches):
+        #     plt.hist(hmac_batch, bins='auto')
+        #     plt.title(f"HMAC Distribution - Batch {i + 1}")
+        #     plt.xlabel("HMAC Values")
+        #     plt.ylabel("Frequency")
+        #     plt.show()
 
-        known_hmac_hex = data['challenge'][152:184]
-        known_hmac = bytes.fromhex(known_hmac_hex)
+        # known_hmac_hex = data['challenge'][152:184]
+        # known_hmac = bytes.fromhex(known_hmac_hex)
 
-        # Assuming key is generated using random.getrandbits(256)
+        # # Assuming key is generated using random.getrandbits(256)
         key = random.getrandbits(256)
 
         # Message to be authenticated
