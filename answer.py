@@ -35,7 +35,7 @@ def fetch(n):
 	if resp.status_code != 200:
 		raise Exception(resp.json()['detail'])
 	
-	print(resp.json())
+	#print(resp.json())
 	return resp.json()
 
 # Submit a guess for level n
@@ -460,8 +460,15 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
 
     while current_time <= end_time:
         seed = str(current_time).encode('utf-8')
+        random.seed(seed)
 
-        hmac_obj = hmac.new(seed, username_bytes, hashlib.md5)
+        secret_key_int = random.getrandbits(256)
+
+        secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+
+        #hmac_obj = hmac.new(seed, username_bytes, hashlib.md5)
 
         # Get the HMAC digest
         digest = hmac_obj.digest()
@@ -592,22 +599,22 @@ for i in range(7, 8):
         # total_time = (end - start).total_seconds()
 
         # start_time = int(time.time())
-        end_time = start_time + 36000
+        # end_time = start_time + 36000000
 
-        # predict_next_key()
+        # # predict_next_key()
 
-        # Known original message
-        original_message = 'username=user00000'
+        # # Known original message
+        # original_message = 'username=user00000'
 
-        #second_current_time = str(time.time()).encode('utf-8')
-        #end = datetime.now()
-        # total_time = (end - start).total_seconds()
+        # #second_current_time = str(time.time()).encode('utf-8')
+        # #end = datetime.now()
+        # # total_time = (end - start).total_seconds()
 
-        # Known HMAC (input manually)
-        known_hmac_hex = input("Enter the known HMAC value (hex): ")
-        known_hmac = bytes.fromhex(known_hmac_hex)
+        # # Known HMAC (input manually)
+        # known_hmac_hex = input("Enter the known HMAC value (hex): ")
+        # known_hmac = bytes.fromhex(known_hmac_hex)
 
-        sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex)
+        # sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex)
         # md5_brute_force(known_hmac_hex)
         
         #predicted_key = predict_next_key(known_hmac_hex,original_message,256)
@@ -626,8 +633,51 @@ for i in range(7, 8):
         # print(f'Known Hash Value: {known_hmac_hex}')
         # print(f'Appended Data: {appended_data.decode()}')
         # print(f'Extended Hash: {new_hmac.hex()}')
+        # print("\n\nStart below________")
 
-        guess = "757365726e616d653d61646d696e:" + known_hmac_hex
+        # print(data['challenge'][152:184])
+
+        file_path = "collected_hmacs.txt"
+        # with open(file_path, 'w') as file:
+        #     for i in range(0,1000):
+        #         file.write(data['challenge'][152:184])
+        #         file.write("\n")
+        #         data = fetch(level)
+
+
+        # Read HMACs from the file
+        with open(file_path, 'r') as file:
+            hmacs = [line.strip() for line in file]
+
+        # Set the number of HMACs to visualize in each graph
+        batch_size = 500
+
+        # Split HMACs into batches
+        hmac_batches = [hmacs[i:i + batch_size] for i in range(0, len(hmacs), batch_size)]
+
+        # Visualize each batch separately
+        for i, hmac_batch in enumerate(hmac_batches):
+            plt.hist(hmac_batch, bins='auto')
+            plt.title(f"HMAC Distribution - Batch {i + 1}")
+            plt.xlabel("HMAC Values")
+            plt.ylabel("Frequency")
+            plt.show()
+
+        known_hmac_hex = data['challenge'][152:184]
+        known_hmac = bytes.fromhex(known_hmac_hex)
+
+        # Assuming key is generated using random.getrandbits(256)
+        key = random.getrandbits(256)
+
+        # Message to be authenticated
+        message = "username=admin"
+
+        # Generating HMAC using MD5
+        hmac_result = hmac.new(key.to_bytes(32, 'big'), message.encode('utf-8'), hashlib.md5).hexdigest()
+
+        print(f'Generated HMAC: {hmac_result}')
+
+        guess = "757365726e616d653d61646d696e:" + hmac_result
         print(f'Crafted Guess: {guess}')
         
         h = solve(level, guess)
