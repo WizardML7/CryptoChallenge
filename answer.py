@@ -35,7 +35,7 @@ def fetch(n):
 	if resp.status_code != 200:
 		raise Exception(resp.json()['detail'])
 	
-	#print(resp.json())
+	print(resp.json())
 	return resp.json()
 
 # Submit a guess for level n
@@ -471,10 +471,9 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
         #hmac_obj = hmac.new(seed, username_bytes, hashlib.md5)
 
         # Get the HMAC digest
-        digest = hmac_obj.digest()
-        digest_hex = digest.hex()
+        digest = hmac_obj.hexdigest()
 
-        if digest_hex == known_hmac_hex:
+        if digest == known_hmac_hex:
             print("Found a match")
             username = "username=admin"
 
@@ -489,26 +488,25 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
             hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
 
             # Get the HMAC digest
-            digest = hmac_obj.digest()
-            digest_hex = digest.hex()
+            digest = hmac_obj.hexdigest()
 
             guess = username_hex + ":"
 
-            guess += digest_hex
+            guess += digest
 
             h = solve(level, guess)
             if 'hash' in h: hashes[level] = h['hash']
 
-        current_time = current_time + 0.000001
+        current_time = current_time + 1
 
 hashes = {}
 
 for i in range(7, 8):
     level = i
-    start_time = datetime.now().timestamp()
+    start_time = time.time()
     #current_time = str(time.time()).encode('utf-8')
     data = fetch(level)
-    end_time = datetime.now().timestamp()
+    end_time = time.time()
     # data = 'hi'
 
     if level == 0:
@@ -616,12 +614,12 @@ for i in range(7, 8):
         # known_hmac = bytes.fromhex(known_hmac_hex)data['challenge'][152:184]
 
         known_hmac_hex = data['challenge'][152:184]
-        print(start_time)
-        print(type(start_time))
+        print(known_hmac_hex)
+        print(int(start_time))
         end_time = end_time
-        print(end_time)
+        print(int(end_time))
         
-        sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex)
+        sys_time_MD5_brute_force(int(start_time) - 2000000,int(end_time) + 2,known_hmac_hex)
         # md5_brute_force(known_hmac_hex)
         
         #predicted_key = predict_next_key(known_hmac_hex,original_message,256)
@@ -674,6 +672,7 @@ for i in range(7, 8):
         # known_hmac = bytes.fromhex(known_hmac_hex)
 
         # # Assuming key is generated using random.getrandbits(256)
+        random.seed(int(start_time))
         key = random.getrandbits(256)
 
         # Message to be authenticated

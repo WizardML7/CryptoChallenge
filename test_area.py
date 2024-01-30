@@ -2,7 +2,10 @@ import random
 import os
 import time
 from datetime import datetime
-
+# random.seed(1)
+print(random.getstate())
+print(random.getstate()[1][0])
+print(random.getrandbits(256))
 
 # Check if /dev/urandom exists
 urandom_exists = os.path.exists("/dev/urandom")
