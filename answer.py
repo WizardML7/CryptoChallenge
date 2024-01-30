@@ -336,7 +336,7 @@ def sha256_length_extension_attack(original_message, known_hmac, appended_data):
 
 def md5_brute_force(known_hmac_hex):
     count = 0
-    max_iterations = 10000  # Set a maximum number of iterations
+    max_iterations = 32768  # Set a maximum number of iterations
 
     username = "username=user00000"
 
@@ -346,7 +346,7 @@ def md5_brute_force(known_hmac_hex):
 
     while count < max_iterations:
         random.seed(count)
-        for i in range(0,5000):
+        for i in range(0,50):
 
             secret_key_int = random.getrandbits(256)
 
@@ -355,10 +355,10 @@ def md5_brute_force(known_hmac_hex):
             hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
 
             # Get the HMAC digest
-            digest = hmac_obj.digest()
-            digest_hex = digest.hex()
+            digest = hmac_obj.hexdigest()
+            # digest_hex = digest.hex()
 
-            if digest_hex == known_hmac_hex:
+            if hmac.compare_digest(digest,known_hmac_hex):
                 print("Found a match")
                 username = "username=admin"
 
@@ -460,11 +460,13 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
     username_hex = username_bytes.hex()
 
     while current_time <= end_time:
-        seed = current_time
-        random.seed(seed)
+        # seed = current_time
+        # random.seed(seed)
 
         #Trying to see if I need a further number in sequence with for loop
-        for i in range(624):
+        for i in range(32768):
+            seed = current_time + i
+            random.seed(seed)
 
 
             secret_key_int = random.getrandbits(256)
@@ -635,7 +637,8 @@ for i in range(7, 8):
 
             print("done")
         
-        sys_time_MD5_brute_force(int(start_time) - 86400,int(end_time) + 2,known_hmac_hex)
+        sys_time_MD5_brute_force(int(start_time) - 1,int(end_time) + 2,known_hmac_hex)
+        #md5_brute_force(known_hmac_hex)
 
         # Restore /dev/urandom if it was originally present
         if urandom_exists & random_exists:
