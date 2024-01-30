@@ -9,6 +9,7 @@ import time
 import random
 import hmac
 import hashlib
+import os
 #import z3
 #import struct
 
@@ -462,40 +463,45 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
         seed = current_time
         random.seed(seed)
 
-        secret_key_int = random.getrandbits(256)
+        #Trying to see if I need a further number in sequence with for loop
+        for i in range(624):
 
-        secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
 
-        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
-
-        #hmac_obj = hmac.new(seed, username_bytes, hashlib.md5)
-
-        # Get the HMAC digest
-        digest = hmac_obj.hexdigest()
-
-        if digest == known_hmac_hex:
-            print("Found a match")
-            username = "username=admin"
-
-            username_bytes = username.encode('utf-8')
-
-            username_hex = username_bytes.hex()
-            
             secret_key_int = random.getrandbits(256)
 
             secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
 
             hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
 
+            #hmac_obj = hmac.new(seed, username_bytes, hashlib.md5)
+
             # Get the HMAC digest
             digest = hmac_obj.hexdigest()
 
-            guess = username_hex + ":"
+            # hmac.compare_digest(digest,known_hmac_hex)
+            if hmac.compare_digest(digest,known_hmac_hex):
+                print("Found a match")
+                username = "username=admin"
 
-            guess += digest
+                username_bytes = username.encode('utf-8')
 
-            h = solve(level, guess)
-            if 'hash' in h: hashes[level] = h['hash']
+                username_hex = username_bytes.hex()
+                
+                secret_key_int = random.getrandbits(256)
+
+                secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+                hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+
+                # Get the HMAC digest
+                digest = hmac_obj.hexdigest()
+
+                guess = username_hex + ":"
+
+                guess += digest
+
+                h = solve(level, guess)
+                if 'hash' in h: hashes[level] = h['hash']
 
         current_time = current_time + 1
 
@@ -618,8 +624,25 @@ for i in range(7, 8):
         print(int(start_time))
         end_time = end_time
         print(int(end_time))
+
+        # Check if /dev/urandom exists
+        urandom_exists = os.path.exists("/dev/urandom")
+        random_exists = os.path.exists("/dev/random")
+
+        if urandom_exists & random_exists:
+            os.rename("/dev/urandom", "/dev/urandom_temp")
+            os.rename("/dev/random", "/dev/random_temp")
+
+            print("done")
         
-        sys_time_MD5_brute_force(int(start_time) - 2000000,int(end_time) + 2,known_hmac_hex)
+        sys_time_MD5_brute_force(int(start_time) - 86400,int(end_time) + 2,known_hmac_hex)
+
+        # Restore /dev/urandom if it was originally present
+        if urandom_exists & random_exists:
+            os.rename("/dev/urandom_temp", "/dev/urandom")
+            os.rename("/dev/random_temp", "/dev/random")
+
+            print("Done")
         # md5_brute_force(known_hmac_hex)
         
         #predicted_key = predict_next_key(known_hmac_hex,original_message,256)
@@ -672,17 +695,21 @@ for i in range(7, 8):
         # known_hmac = bytes.fromhex(known_hmac_hex)
 
         # # Assuming key is generated using random.getrandbits(256)
-        random.seed(int(start_time))
-        key = random.getrandbits(256)
+        # random.seed(int(start_time))
+        # key = random.getrandbits(256)
+        key = b""
 
         # Message to be authenticated
         message = "username=admin"
 
         # Generating HMAC using MD5
-        hmac_result = hmac.new(key.to_bytes(32, 'big'), message.encode('utf-8'), hashlib.md5).hexdigest()
+        hmac_result = hmac.new(key, message.encode('utf-8'), hashlib.md5).hexdigest()
 
         print(f'Generated HMAC: {hmac_result}')
-
+        #username=admin
+        #757365726e616d653d61646d696e:44a056ea40b0febc548681ff19d1e648
+        #username=user00000
+        #757365726e616d653d757365723030303030:6f228f8c0bc1d2964c6a18613a8bb9fc
         guess = "757365726e616d653d61646d696e:" + hmac_result
         print(f'Crafted Guess: {guess}')
         
