@@ -270,26 +270,26 @@ def xor_hex_strings(hex_str1, hex_str2):
 
     return result_hex_str
 
-def md5_length_extension_attack(original_message, known_hash_value, appended_data):
-    # Known length of the original message
-    original_length = len(original_message)
+# def md5_length_extension_attack(original_message, known_hash_value, appended_data):
+#     # Known length of the original message
+#     original_length = len(original_message)
 
-    # Construct the padding for the original message
-    padding = b'\x80' + b'\x00' * ((64 - (original_length + 9) % 64) % 64)
+#     # Construct the padding for the original message
+#     padding = b'\x80' + b'\x00' * ((64 - (original_length + 9) % 64) % 64)
 
-    # Append the length of the original message (in bits) to the padding
-    padded_message = original_message + padding + (original_length * 8).to_bytes(8, 'little')
+#     # Append the length of the original message (in bits) to the padding
+#     padded_message = original_message + padding + (original_length * 8).to_bytes(8, 'little')
 
-    #Calculate the HMAC using the known hash value as the key
-    hmac_obj = hmac.new(known_hash_value, msg=padded_message, digestmod=hashlib.md5)
+#     #Calculate the HMAC using the known hash value as the key
+#     hmac_obj = hmac.new(known_hash_value, msg=padded_message, digestmod=hashlib.md5)
 
-    # Continue hashing with the appended data
-    hmac_obj.update(appended_data.encode('utf-8'))
+#     # Continue hashing with the appended data
+#     hmac_obj.update(appended_data.encode('utf-8'))
 
-    # Obtain the final hash value
-    new_hash_value = hmac_obj.hexdigest()
+#     # Obtain the final hash value
+#     new_hash_value = hmac_obj.hexdigest()
 
-    return new_hash_value
+#     return new_hash_value
 
 def sha1_length_extension_attack(original_message, known_hash_value, appended_data):
     # Known length of the original message
@@ -527,6 +527,261 @@ def md4_length_extension_attack(original_message, known_hash_value, appended_dat
     # Return the extended hash value
     return struct.pack('<4I', A, B, C, D)
 
+def md5_length_extension_attack(original_message, known_hash_value, appended_data):
+    original_length = len(original_message)
+    padding = b'\x80' + b'\x00' * ((64 - (original_length + 9) % 64) % 64)
+    padded_message = original_message + padding + (original_length * 8).to_bytes(8, 'little')
+
+    X = list(struct.unpack('<16I', padded_message[:64]))
+
+    # Initialize MD5 state
+    A, B, C, D = struct.unpack('<4I', known_hash_value)
+
+    # Process padded message
+    for i in range(0, len(padded_message), 64):
+        X = list(struct.unpack('<16I', padded_message[i:i+64]))
+
+        a, b, c, d = A, B, C, D
+
+        # MD5 Rounds
+        def F(X, Y, Z):
+            return (X & Y) | (~X & Z)
+
+        def G(X, Y, Z):
+            return (X & Z) | (Y & ~Z)
+
+        def H(X, Y, Z):
+            return X ^ Y ^ Z
+
+        def I(X, Y, Z):
+            return Y ^ (X | ~Z)
+
+        def rotate_left(x, n):
+            return (x << n) | (x >> (32 - n))
+
+        # Round 1
+        a = (a + F(b, c, d) + X[0] + 0xd76aa478) & 0xFFFFFFFF
+        a = rotate_left(a, 7)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + F(a, b, c) + X[1] + 0xe8c7b756) & 0xFFFFFFFF
+        d = rotate_left(d, 12)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + F(d, a, b) + X[2] + 0x242070db) & 0xFFFFFFFF
+        c = rotate_left(c, 17)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + F(c, d, a) + X[3] + 0xc1bdceee) & 0xFFFFFFFF
+        b = rotate_left(b, 22)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + F(b, c, d) + X[4] + 0xf57c0faf) & 0xFFFFFFFF
+        a = rotate_left(a, 7)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + F(a, b, c) + X[5] + 0x4787c62a) & 0xFFFFFFFF
+        d = rotate_left(d, 12)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + F(d, a, b) + X[6] + 0xa8304613) & 0xFFFFFFFF
+        c = rotate_left(c, 17)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + F(c, d, a) + X[7] + 0xfd469501) & 0xFFFFFFFF
+        b = rotate_left(b, 22)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + F(b, c, d) + X[8] + 0x698098d8) & 0xFFFFFFFF
+        a = rotate_left(a, 7)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + F(a, b, c) + X[9] + 0x8b44f7af) & 0xFFFFFFFF
+        d = rotate_left(d, 12)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + F(d, a, b) + X[10] + 0xffff5bb1) & 0xFFFFFFFF
+        c = rotate_left(c, 17)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + F(c, d, a) + X[11] + 0x895cd7be) & 0xFFFFFFFF
+        b = rotate_left(b, 22)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + F(b, c, d) + X[12] + 0x6b901122) & 0xFFFFFFFF
+        a = rotate_left(a, 7)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + F(a, b, c) + X[13] + 0xfd987193) & 0xFFFFFFFF
+        d = rotate_left(d, 12)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + F(d, a, b) + X[14] + 0xa679438e) & 0xFFFFFFFF
+        c = rotate_left(c, 17)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + F(c, d, a) + X[15] + 0x49b40821) & 0xFFFFFFFF
+        b = rotate_left(b, 22)
+        b = (b + c) & 0xFFFFFFFF
+
+        # Round 2
+        a = (a + G(b, c, d) + X[1] + 0xf61e2562) & 0xFFFFFFFF
+        a = rotate_left(a, 5)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + G(a, b, c) + X[6] + 0xc040b340) & 0xFFFFFFFF
+        d = rotate_left(d, 9)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + G(d, a, b) + X[11] + 0x265e5a51) & 0xFFFFFFFF
+        c = rotate_left(c, 14)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + G(c, d, a) + X[0] + 0xe9b6c7aa) & 0xFFFFFFFF
+        b = rotate_left(b, 20)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + G(b, c, d) + X[5] + 0xd62f105d) & 0xFFFFFFFF
+        a = rotate_left(a, 5)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + G(a, b, c) + X[10] + 0x02441453) & 0xFFFFFFFF
+        d = rotate_left(d, 9)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + G(d, a, b) + X[15] + 0xd8a1e681) & 0xFFFFFFFF
+        c = rotate_left(c, 14)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + G(c, d, a) + X[4] + 0xe7d3fbc8) & 0xFFFFFFFF
+        b = rotate_left(b, 20)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + G(b, c, d) + X[9] + 0x21e1cde6) & 0xFFFFFFFF
+        a = rotate_left(a, 5)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + G(a, b, c) + X[14] + 0xc33707d6) & 0xFFFFFFFF
+        d = rotate_left(d, 9)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + G(d, a, b) + X[3] + 0xf4d50d87) & 0xFFFFFFFF
+        c = rotate_left(c, 14)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + G(c, d, a) + X[8] + 0x455a14ed) & 0xFFFFFFFF
+        b = rotate_left(b, 20)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + G(b, c, d) + X[13] + 0xa9e3e905) & 0xFFFFFFFF
+        a = rotate_left(a, 5)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + G(a, b, c) + X[2] + 0xfcefa3f8) & 0xFFFFFFFF
+        d = rotate_left(d, 9)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + G(d, a, b) + X[7] + 0x676f02d9) & 0xFFFFFFFF
+        c = rotate_left(c, 14)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + G(c, d, a) + X[12] + 0x8d2a4c8a) & 0xFFFFFFFF
+        b = rotate_left(b, 20)
+        b = (b + c) & 0xFFFFFFFF
+
+        # Round 3
+        a = (a + H(b, c, d) + X[5] + 0xfffa3942) & 0xFFFFFFFF
+        a = rotate_left(a, 4)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + H(a, b, c) + X[8] + 0x8771f681) & 0xFFFFFFFF
+        d = rotate_left(d, 11)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + H(d, a, b) + X[11] + 0x6d9d6122) & 0xFFFFFFFF
+        c = rotate_left(c, 16)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + H(c, d, a) + X[14] + 0xfde5380c) & 0xFFFFFFFF
+        b = rotate_left(b, 23)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + H(b, c, d) + X[1] + 0xa4beea44) & 0xFFFFFFFF
+        a = rotate_left(a, 4)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + H(a, b, c) + X[4] + 0x4bdecfa9) & 0xFFFFFFFF
+        d = rotate_left(d, 11)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + H(d, a, b) + X[7] + 0xf6bb4b60) & 0xFFFFFFFF
+        c = rotate_left(c, 16)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + H(c, d, a) + X[10] + 0xbebfbc70) & 0xFFFFFFFF
+        b = rotate_left(b, 23)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + H(b, c, d) + X[13] + 0x289b7ec6) & 0xFFFFFFFF
+        a = rotate_left(a, 4)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + H(a, b, c) + X[0] + 0xeaa127fa) & 0xFFFFFFFF
+        d = rotate_left(d, 11)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + H(d, a, b) + X[3] + 0xd4ef3085) & 0xFFFFFFFF
+        c = rotate_left(c, 16)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + H(c, d, a) + X[6] + 0x04881d05) & 0xFFFFFFFF
+        b = rotate_left(b, 23)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + H(b, c, d) + X[9] + 0xd9d4d039) & 0xFFFFFFFF
+        a = rotate_left(a, 4)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + H(a, b, c) + X[12] + 0xe6db99e5) & 0xFFFFFFFF
+        d = rotate_left(d, 11)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + H(d, a, b) + X[15] + 0x1fa27cf8) & 0xFFFFFFFF
+        c = rotate_left(c, 16)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + H(c, d, a) + X[2] + 0xc4ac5665) & 0xFFFFFFFF
+        b = rotate_left(b, 23)
+        b = (b + c) & 0xFFFFFFFF
+
+        # Round 4
+        a = (a + I(b, c, d) + X[0] + 0xf4292244) & 0xFFFFFFFF
+        a = rotate_left(a, 6)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + I(a, b, c) + X[7] + 0x432aff97) & 0xFFFFFFFF
+        d = rotate_left(d, 10)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + I(d, a, b) + X[14] + 0xab9423a7) & 0xFFFFFFFF
+        c = rotate_left(c, 15)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + I(c, d, a) + X[5] + 0xfc93a039) & 0xFFFFFFFF
+        b = rotate_left(b, 21)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + I(b, c, d) + X[12] + 0x655b59c3) & 0xFFFFFFFF
+        a = rotate_left(a, 6)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + I(a, b, c) + X[3] + 0x8f0ccc92) & 0xFFFFFFFF
+        d = rotate_left(d, 10)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + I(d, a, b) + X[10] + 0xffeff47d) & 0xFFFFFFFF
+        c = rotate_left(c, 15)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + I(c, d, a) + X[1] + 0x85845dd1) & 0xFFFFFFFF
+        b = rotate_left(b, 21)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + I(b, c, d) + X[8] + 0x6fa87e4f) & 0xFFFFFFFF
+        a = rotate_left(a, 6)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + I(a, b, c) + X[15] + 0xfe2ce6e0) & 0xFFFFFFFF
+        d = rotate_left(d, 10)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + I(d, a, b) + X[6] + 0xa3014314) & 0xFFFFFFFF
+        c = rotate_left(c, 15)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + I(c, d, a) + X[13] + 0x4e0811a1) & 0xFFFFFFFF
+        b = rotate_left(b, 21)
+        b = (b + c) & 0xFFFFFFFF
+
+        a = (a + I(b, c, d) + X[4] + 0xf7537e82) & 0xFFFFFFFF
+        a = rotate_left(a, 6)
+        a = (a + b) & 0xFFFFFFFF
+        d = (d + I(a, b, c) + X[11] + 0xbd3af235) & 0xFFFFFFFF
+        d = rotate_left(d, 10)
+        d = (d + a) & 0xFFFFFFFF
+        c = (c + I(d, a, b) + X[2] + 0x2ad7d2bb) & 0xFFFFFFFF
+        c = rotate_left(c, 15)
+        c = (c + d) & 0xFFFFFFFF
+        b = (b + I(c, d, a) + X[9] + 0xeb86d391) & 0xFFFFFFFF
+        b = rotate_left(b, 21)
+        b = (b + c) & 0xFFFFFFFF
+
+        A = (A + a) & 0xFFFFFFFF
+        B = (B + b) & 0xFFFFFFFF
+        C = (C + c) & 0xFFFFFFFF
+        D = (D + d) & 0xFFFFFFFF
+
+    # Concatenate the new hash values
+    new_hash_value = struct.pack('<4I', A, B, C, D)
+
+    return new_hash_value
+
+
 hashes = {}
 
 for i in range(7, 8):
@@ -645,10 +900,10 @@ for i in range(7, 8):
         known_hash_value = bytes.fromhex(known_hmac_hex)
 
         # Data to be appended
-        appended_data = b'username=admin'
+        appended_data = b'admin=true'
 
         # Perform length extension attack
-        new_hmac = md4_length_extension_attack(username_bytes, known_hash_value, appended_data)
+        new_hmac = md5_length_extension_attack(username_bytes, known_hash_value, appended_data)
 
         guess = "757365726e616d653d757365723030303030:" + new_hmac.hex()
         print(f'Crafted Guess: {guess}')
