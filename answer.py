@@ -281,14 +281,14 @@ def md5_length_extension_attack(original_message, known_hash_value, appended_dat
     # Append the length of the original message (in bits) to the padding
     padded_message = original_message + padding + (original_length * 8).to_bytes(8, 'little')
 
-    # Calculate the HMAC using the known hash value as the key
+    #Calculate the HMAC using the known hash value as the key
     hmac_obj = hmac.new(known_hash_value, msg=padded_message, digestmod=hashlib.md5)
 
     # Continue hashing with the appended data
-    hmac_obj.update(appended_data)
+    hmac_obj.update(appended_data.encode('utf-8'))
 
     # Obtain the final hash value
-    new_hash_value = hmac_obj.digest()
+    new_hash_value = hmac_obj.hexdigest()
 
     return new_hash_value
 
@@ -398,58 +398,6 @@ def predict_next_key(hmac_hexdigest, message, key_size):
 
     return None
 
-# def predict_next_random_sequence_256(sequence):
-#     solver = z3.Solver()
-
-#     # Create 64 bit states, BitVec (uint64_t)
-#     se_state0, se_state1, se_state2, se_state3 = z3.BitVecs("se_state0 se_state1 se_state2 se_state3", 64)
-
-#     for i in range(len(sequence)):
-#         se_s3 = se_state0
-#         se_s2 = se_state1
-#         se_s1 = se_state2
-#         se_s0 = se_state3
-#         se_state0 = se_s0
-#         se_s3 ^= se_s3 << 23
-#         se_s3 ^= z3.LShR(se_s3, 17)
-#         se_s3 ^= se_s2
-#         se_s3 ^= z3.LShR(se_s2, 26)
-#         se_state1 = se_s3
-
-#         se_s2 = se_state0
-#         se_state2 = se_s1
-
-#         se_s1 = se_state3
-#         se_state3 = se_s0
-
-#         se_s0 = se_state2
-#         se_state2 = se_s0
-
-#         # Pack as `double` and re-interpret as unsigned `long long` (little endian)
-#         float_64 = struct.pack("d", sequence[i])
-#         u_long_long_64 = struct.unpack("<Q", float_64)[0]
-
-#         # Compare entire 64-bit values
-#         solver.add(z3.BitVecVal(u_long_long_64 & 0xFFFFFFFFFFFFFFFF, 64) == se_state3)
-
-#     if solver.check() == z3.sat:
-#         model = solver.model()
-
-#         states = {}
-#         for state in model.decls():
-#             states[state.__str__()] = model[state]
-
-#         state0 = states["se_state0"].as_long()
-
-#         # Extract mantissa
-#         u_long_long_64 = (state0 >> 12) | 0x3FF0000000000000
-#         float_64 = struct.pack("<Q", u_long_long_64)
-#         next_sequence = struct.unpack("d", float_64)[0]
-
-#         return next_sequence
-#     else:
-#         return None
-    
 def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
     current_time = start_time
 
@@ -587,74 +535,53 @@ for i in range(7, 8):
         #dd if=/dev/random bs=1 count=1
         #dd if=/dev/urandom bs=1 count=1 | od -cx
 
-
-
-
-        # random.seed(1)
-        # # for i in range(20001):
-        # #     print(random.getrandbits(256))
-
-        # # Example usage with a sequence generated using random.getrandombits
-        # random_sequence_256 = [random.getrandbits(256) for _ in range(5)]  # Use a longer sequence
-        # predicted_next_sequence_256 = predict_next_random_sequence_256(random_sequence_256)
-
-        # print(f"Original Sequence: {random_sequence_256}")
-        # print(f"Predicted Next Sequence: {predicted_next_sequence_256}")
-
-        # start = datetime.now()
-        # end = datetime.now()
-        # total_time = (end - start).total_seconds()
-
-        # start_time = int(time.time())
-        # end_time = start_time + 36000000
-
-        # # predict_next_key()
-
-        # # Known original message
-        # original_message = 'username=user00000'
-
-        # #second_current_time = str(time.time()).encode('utf-8')
-        # #end = datetime.now()
-        # # total_time = (end - start).total_seconds()
-
-        # # Known HMAC (input manually)
-        # known_hmac_hex = input("Enter the known HMAC value (hex): ")
         # known_hmac = bytes.fromhex(known_hmac_hex)data['challenge'][152:184]
 
         known_hmac_hex = data['challenge'][152:184]
         print(known_hmac_hex)
-        print(int(start_time))
-        end_time = end_time
-        print(int(end_time))
+        # print(int(start_time))
+        # end_time = end_time
+        # print(int(end_time))
 
-        # Check if /dev/urandom exists
-        urandom_exists = os.path.exists("/dev/urandom")
-        random_exists = os.path.exists("/dev/random")
+        # # Check if /dev/urandom exists
+        # urandom_exists = os.path.exists("/dev/urandom")
+        # random_exists = os.path.exists("/dev/random")
 
-        if urandom_exists & random_exists:
-            os.rename("/dev/urandom", "/dev/urandom_temp")
-            os.rename("/dev/random", "/dev/random_temp")
+        # if urandom_exists & random_exists:
+        #     os.rename("/dev/urandom", "/dev/urandom_temp")
+        #     os.rename("/dev/random", "/dev/random_temp")
 
-            print("done")
+        #     print("done")
         
-        sys_time_MD5_brute_force(int(start_time) - 1,int(end_time) + 2,known_hmac_hex)
-        #md5_brute_force(known_hmac_hex)
+        # sys_time_MD5_brute_force(int(start_time) - 1,int(end_time) + 2,known_hmac_hex)
+        # #md5_brute_force(known_hmac_hex)
 
-        # Restore /dev/urandom if it was originally present
-        if urandom_exists & random_exists:
-            os.rename("/dev/urandom_temp", "/dev/urandom")
-            os.rename("/dev/random_temp", "/dev/random")
+        # # Restore /dev/urandom if it was originally present
+        # if urandom_exists & random_exists:
+        #     os.rename("/dev/urandom_temp", "/dev/urandom")
+        #     os.rename("/dev/random_temp", "/dev/random")
 
-            print("Done")
+        #     print("Done")
         # md5_brute_force(known_hmac_hex)
-        
-        #predicted_key = predict_next_key(known_hmac_hex,original_message,256)
+
+        username = "username=user00000"
+
+        username_bytes = username.encode('utf-8')
+
+        username_hex = username_bytes.hex()
 
         # Data to be appended
-        #appended_data = b'username=admin'
+        appended_data = ';admin=True'
 
         # Perform length extension attack
-        #new_hmac = md5_length_extension_attack(original_message, known_hmac, appended_data)
+        new_hmac = md5_length_extension_attack(username_bytes, known_hmac_hex.encode('utf-8'), appended_data)
+
+        guess = "757365726e616d653d757365723030303030:" + new_hmac
+        print(f'Crafted Guess: {guess}')
+        
+        h = solve(level, guess)
+        print(h)
+        if 'hash' in h: hashes[level] = h['hash']
         #new_hmac = sha1_length_extension_attack(original_message, known_hmac, appended_data)
         #new_hmac = sha256_length_extension_attack(original_message, known_hmac, appended_data)
 
@@ -700,25 +627,25 @@ for i in range(7, 8):
         # # Assuming key is generated using random.getrandbits(256)
         # random.seed(int(start_time))
         # key = random.getrandbits(256)
-        key = b""
+        # key = b""
 
-        # Message to be authenticated
-        message = "username=admin"
+        # # Message to be authenticated
+        # message = "username=admin"
 
-        # Generating HMAC using MD5
-        hmac_result = hmac.new(key, message.encode('utf-8'), hashlib.md5).hexdigest()
+        # # Generating HMAC using MD5
+        # hmac_result = hmac.new(key, message.encode('utf-8'), hashlib.md5).hexdigest()
 
-        print(f'Generated HMAC: {hmac_result}')
-        #username=admin
-        #757365726e616d653d61646d696e:44a056ea40b0febc548681ff19d1e648
-        #username=user00000
-        #757365726e616d653d757365723030303030:6f228f8c0bc1d2964c6a18613a8bb9fc
-        guess = "757365726e616d653d61646d696e:" + hmac_result
-        print(f'Crafted Guess: {guess}')
+        # print(f'Generated HMAC: {hmac_result}')
+        # #username=admin
+        # #757365726e616d653d61646d696e:44a056ea40b0febc548681ff19d1e648
+        # #username=user00000
+        # #757365726e616d653d757365723030303030:6f228f8c0bc1d2964c6a18613a8bb9fc
+        # guess = "757365726e616d653d757365723030303030:" + hmac_result
+        # print(f'Crafted Guess: {guess}')
         
-        h = solve(level, guess)
-        print(h)
-        if 'hash' in h: hashes[level] = h['hash']
+        # h = solve(level, guess)
+        # print(h)
+        # if 'hash' in h: hashes[level] = h['hash']
     elif level == 8:
         print("Placeholder")
         h = solve(level, guess)
