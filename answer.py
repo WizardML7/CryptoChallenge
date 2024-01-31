@@ -10,8 +10,7 @@ import random
 import hmac
 import hashlib
 import os
-#import z3
-#import struct
+import struct
 
 # Global values
 base = "http://crypto.praetorian.com/{}"
@@ -455,6 +454,79 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
 
         current_time = current_time + 1
 
+
+def F(X, Y, Z):
+    return (X & Y) | ((~X) & Z)
+
+def G(X, Y, Z):
+    return (X & Y) | (X & Z) | (Y & Z)
+
+def H(X, Y, Z):
+    return X ^ Y ^ Z
+
+def round1(a, b, c, d, k, s, X):
+    return (a + F(b, c, d) + (X[k] & 0xFFFFFFFF) + s) & 0xFFFFFFFF
+
+def round2(a, b, c, d, k, s, X):
+    return (a + G(b, c, d) + (X[k] + 0x5A827999 + ((b & c) | ((~b) & d))) + s) & 0xFFFFFFFF
+
+def round3(a, b, c, d, k, s, X):
+    return (a + H(b, c, d) + (X[k] + 0x6ED9EBA1 + (b ^ c ^ d)) + s) & 0xFFFFFFFF
+
+def md4_length_extension_attack(original_message, known_hash_value, appended_data):
+    # Lengths in bits
+    original_length = len(original_message) * 8
+    appended_length = len(appended_data) * 8
+
+    # Padding
+    padding = b'\x80' + b'\x00' * ((56 - len(original_message) % 64) % 64)
+    padded_message = original_message + padding + struct.pack('<Q', original_length + appended_length)
+
+    # Initialize MD4 state
+    A, B, C, D = struct.unpack('<4I', known_hash_value)
+
+    # Process padded message
+    X = list(struct.unpack('<16I', padded_message[:64]))
+
+    for i in range(0, len(padded_message), 64):
+        # Round 1
+        a = round1(A, B, C, D, 0, 3, X)
+        d = round1(D, a, B, C, 1, 7, X)
+        c = round1(C, d, a, B, 2, 11, X)
+        b = round1(B, c, d, a, 3, 19, X)
+        A = round1(a, B, c, d, 4, 3, X)
+        D = round1(D, a, B, c, 5, 7, X)
+        C = round1(C, D, a, B, 6, 11, X)
+        B = round1(B, C, D, a, 7, 19, X)
+
+        # Round 2
+        a = round2(A, B, C, D, 8, 3, X)
+        d = round2(D, a, B, C, 9, 7, X)
+        c = round2(C, d, a, B, 10, 11, X)
+        b = round2(B, c, d, a, 11, 19, X)
+        A = round2(a, B, c, d, 12, 3, X)
+        D = round2(D, a, B, c, 13, 7, X)
+        C = round2(C, D, a, B, 14, 11, X)
+        B = round2(B, C, D, a, 15, 19, X)
+
+        # Round 3
+        a = round3(A, B, C, D, 0, 3, X)
+        d = round3(D, a, B, C, 4, 5, X)
+        c = round3(C, d, a, B, 8, 9, X)
+        b = round3(B, c, d, a, 12, 13, X)
+        A = round3(a, B, c, d, 1, 3, X)
+        D = round3(D, a, B, c, 5, 5, X)
+        C = round3(C, D, a, B, 9, 9, X)
+        B = round3(B, C, D, a, 13, 13, X)
+
+        A = (A + a) & 0xFFFFFFFF
+        B = (B + b) & 0xFFFFFFFF
+        C = (C + c) & 0xFFFFFFFF
+        D = (D + d) & 0xFFFFFFFF
+
+    # Return the extended hash value
+    return struct.pack('<4I', A, B, C, D)
+
 hashes = {}
 
 for i in range(7, 8):
@@ -570,13 +642,15 @@ for i in range(7, 8):
 
         username_hex = username_bytes.hex()
 
+        known_hash_value = bytes.fromhex(known_hmac_hex)
+
         # Data to be appended
-        appended_data = ';admin=True'
+        appended_data = b'username=admin'
 
         # Perform length extension attack
-        new_hmac = md5_length_extension_attack(username_bytes, known_hmac_hex.encode('utf-8'), appended_data)
+        new_hmac = md4_length_extension_attack(username_bytes, known_hash_value, appended_data)
 
-        guess = "757365726e616d653d757365723030303030:" + new_hmac
+        guess = "757365726e616d653d757365723030303030:" + new_hmac.hex()
         print(f'Crafted Guess: {guess}')
         
         h = solve(level, guess)
