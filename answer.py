@@ -11,6 +11,7 @@ import hmac
 import hashlib
 import os
 import struct
+import hashpumpy
 
 # Global values
 base = "http://crypto.praetorian.com/{}"
@@ -865,6 +866,7 @@ for i in range(7, 8):
         # known_hmac = bytes.fromhex(known_hmac_hex)data['challenge'][152:184]
 
         known_hmac_hex = data['challenge'][152:184]
+        known_hash_value = bytes.fromhex(known_hmac_hex)
         print(known_hmac_hex)
         # print(int(start_time))
         # end_time = end_time
@@ -891,13 +893,27 @@ for i in range(7, 8):
         #     print("Done")
         # md5_brute_force(known_hmac_hex)
 
+        # known_message = 'username=user00000'
+        # extension = 'username=admin'
+
+        # # Key length is known to be 256 bits (32 bytes)
+        # key_length = 32
+
+        # # Perform the length extension attack
+        # new_hmac, new_message = hashpumpy.hashpump(known_hash_value, known_message, extension, key_length)
+        # print(f"New HMAC: {new_hmac}, New message: {new_message}")
+        # guess = new_message + ":" + new_hmac
+        # h = solve(level, guess)
+        # print(h)
+        # if 'hash' in h: hashes[level] = h['hash']
+
         username = "username=user00000"
 
         username_bytes = username.encode('utf-8')
 
         username_hex = username_bytes.hex()
 
-        known_hash_value = bytes.fromhex(known_hmac_hex)
+        #known_hash_value = bytes.fromhex(known_hmac_hex)
 
         # Data to be appended
         appended_data = b'admin=true'
