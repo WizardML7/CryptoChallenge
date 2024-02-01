@@ -930,6 +930,10 @@ for i in range(7, 8):
         #new_hmac = sha1_length_extension_attack(original_message, known_hmac, appended_data)
         #new_hmac = sha256_length_extension_attack(original_message, known_hmac, appended_data)
 
+        # admin
+        # 757365726e616d653d7573657230303030302661646d696e3d74727565
+        # isAdmin
+        # 757365726e616d653d75736572303030303026697341646d696e3d74727565
 
         # Display results
         # print(f'Original Message: {original_message.decode()}')
