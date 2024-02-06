@@ -11,6 +11,7 @@ import hmac
 import hashlib
 import os
 import struct
+from decimal import Decimal, getcontext
 
 # Global values
 base = "http://crypto.praetorian.com/{}"
@@ -398,7 +399,15 @@ def predict_next_key(hmac_hexdigest, message, key_size):
     return None
 
 def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
-    current_time = start_time
+    getcontext().prec = 17  # For example, precision to 16 decimal places
+
+    # Start and stop values as Decimals
+    start = Decimal(str(start_time))
+    stop = Decimal(str(end_time))
+    step = Decimal('0.0000001')
+
+    # Current value
+    current = start
 
     username = "username=user00000"
 
@@ -406,53 +415,54 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
 
     username_hex = username_bytes.hex()
 
-    while current_time <= end_time:
+    while current <= stop:
+    # while current_time <= end_time:
         # seed = current_time
-        # random.seed(seed)
+        # current_time += i
+        # print(current)
+        random.seed(float(current))
 
         #Trying to see if I need a further number in sequence with for loop
-        for i in range(32768):
-            seed = current_time + i
-            random.seed(seed)
+        # for i in range(5):
+            # seed = current_time + i
+            # random.seed(seed)
 
 
-            secret_key_int = random.getrandbits(256)
+        secret_key_int = random.getrandbits(256)
 
-            secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+        secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
 
-            hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
 
             #hmac_obj = hmac.new(seed, username_bytes, hashlib.md5)
 
             # Get the HMAC digest
-            digest = hmac_obj.hexdigest()
+        digest = hmac_obj.hexdigest()
 
             # hmac.compare_digest(digest,known_hmac_hex)
-            if hmac.compare_digest(digest,known_hmac_hex):
-                print("Found a match")
-                username = "username=admin"
+        if hmac.compare_digest(digest,known_hmac_hex):
+            print("Found a match")
+            username = "username=admin"
 
-                username_bytes = username.encode('utf-8')
+            username_bytes = username.encode('utf-8')
 
-                username_hex = username_bytes.hex()
+            username_hex = username_bytes.hex()
                 
-                secret_key_int = random.getrandbits(256)
+                # secret_key_int = random.getrandbits(256)
 
-                secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+                # secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
 
-                hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+            hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
 
                 # Get the HMAC digest
-                digest = hmac_obj.hexdigest()
+            digest = hmac_obj.hexdigest()
 
-                guess = username_hex + ":"
+            guess = username_hex + ":" + digest
 
-                guess += digest
-
-                h = solve(level, guess)
-                if 'hash' in h: hashes[level] = h['hash']
-
-        current_time = current_time + 1
+            h = solve(level, guess)
+            if 'hash' in h: hashes[level] = h['hash']
+        else:
+            current += step
 
 
 def F(X, Y, Z):
@@ -790,6 +800,9 @@ for i in range(7, 8):
     #current_time = str(time.time()).encode('utf-8')
     data = fetch(level)
     end_time = time.time()
+    print(type(start_time))
+    print(start_time)
+    print(end_time)
     # data = 'hi'
 
     if level == 0:
@@ -880,7 +893,7 @@ for i in range(7, 8):
 
         #     print("done")
         
-        # sys_time_MD5_brute_force(int(start_time) - 1,int(end_time) + 2,known_hmac_hex)
+        sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex)
         # #md5_brute_force(known_hmac_hex)
 
         # # Restore /dev/urandom if it was originally present
@@ -891,26 +904,27 @@ for i in range(7, 8):
         #     print("Done")
         # md5_brute_force(known_hmac_hex)
 
-        username = "username=user00000"
 
-        username_bytes = username.encode('utf-8')
+        # username = "username=user00000"
 
-        username_hex = username_bytes.hex()
+        # username_bytes = username.encode('utf-8')
 
-        known_hash_value = bytes.fromhex(known_hmac_hex)
+        # username_hex = username_bytes.hex()
 
-        # Data to be appended
-        appended_data = b'admin=true'
+        # known_hash_value = bytes.fromhex(known_hmac_hex)
 
-        # Perform length extension attack
-        new_hmac = md5_length_extension_attack(username_bytes, known_hash_value, appended_data)
+        # # Data to be appended
+        # appended_data = b'admin=true'
 
-        guess = "757365726e616d653d757365723030303030:" + new_hmac.hex()
-        print(f'Crafted Guess: {guess}')
+        # # Perform length extension attack
+        # new_hmac = md5_length_extension_attack(username_bytes, known_hash_value, appended_data)
+
+        # guess = "757365726e616d653d757365723030303030:" + new_hmac.hex()
+        # print(f'Crafted Guess: {guess}')
         
-        h = solve(level, guess)
-        print(h)
-        if 'hash' in h: hashes[level] = h['hash']
+        # h = solve(level, guess)
+        # print(h)
+        # if 'hash' in h: hashes[level] = h['hash']
         #new_hmac = sha1_length_extension_attack(original_message, known_hmac, appended_data)
         #new_hmac = sha256_length_extension_attack(original_message, known_hmac, appended_data)
 
