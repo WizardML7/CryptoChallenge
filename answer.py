@@ -12,6 +12,7 @@ import hashlib
 import os
 import struct
 from decimal import Decimal, getcontext
+#import hashpumpy
 
 # Global values
 base = "http://crypto.praetorian.com/{}"
@@ -791,6 +792,33 @@ def md5_length_extension_attack(original_message, known_hash_value, appended_dat
 
     return new_hash_value
 
+def iterate_hex_string(target_length):
+    """
+    Generate hexadecimal strings of a specified length. The function starts with
+    a string of all '1's and modifies it left to right, incrementing each character.
+    """
+    # Initialize the string with all '0's
+    hex_string = '0' * target_length
+
+    # Convert the string to a list of integers for easy manipulation
+    int_list = [int(char, 16) for char in hex_string]
+
+    # Function to increment the integer list
+    def increment_list(int_list):
+        for i in range(len(int_list)):
+            if int_list[i] < 15:  # If less than 'f', simply increment
+                int_list[i] += 1
+                break
+            else:  # If 'f', set to '0' and continue to the next character
+                int_list[i] = 0
+
+    while True:
+        # Yield the current hex string
+        yield ''.join(hex(char) for char in int_list).replace('0x', '')
+
+        # Increment the list
+        increment_list(int_list)
+
 
 hashes = {}
 
@@ -878,6 +906,7 @@ for i in range(7, 8):
         # known_hmac = bytes.fromhex(known_hmac_hex)data['challenge'][152:184]
 
         known_hmac_hex = data['challenge'][152:184]
+        known_hash_value = bytes.fromhex(known_hmac_hex)
         print(known_hmac_hex)
         # print(int(start_time))
         # end_time = end_time
@@ -918,6 +947,55 @@ for i in range(7, 8):
 
         # # Perform length extension attack
         # new_hmac = md5_length_extension_attack(username_bytes, known_hash_value, appended_data)
+        # known_message = 'username=user00000'
+        # extension = '&isAdmin=true'
+
+        # # Key length is known to be 256 bits (32 bytes)
+        # key_length = 32
+
+        # # Perform the length extension attack
+        # new_hmac, new_message = hashpumpy.hashpump(known_hash_value, known_message, extension, key_length)
+        # print(f"New HMAC: {new_hmac}, New message: {new_message}")
+        # guess = new_message + ":" + new_hmac
+        # h = solve(level, guess)
+        # print(h)
+        # if 'hash' in h: hashes[level] = h['hash']
+
+        hex_string_generator = iterate_hex_string(len("1cc2a34f703ed2c0a8ea4bdbc0d390d3"))
+
+        # Getting the first 10 iterations as an example
+        current_highest = 0
+        current_leader = ""
+        for _ in range(256):
+            this_try = next(hex_string_generator)
+            guess = "757365726e616d653d61646d696e:" + this_try
+            # print(f'Crafted Guess: {guess}')
+            start_time = time.time()
+            h = solve(level, guess)
+            end_time = time.time()
+            total_time = end_time - start_time
+            if total_time > current_highest:
+                current_highest = total_time
+                current_leader = guess
+            # print(f'Crafted Guess: {guess}, Total time: {total_time}')
+            # print(h)
+            if 'hash' in h: hashes[level] = h['hash']
+        print(current_leader)
+        print(current_highest)
+
+        # username = "username=user00000"
+
+        # username_bytes = username.encode('utf-8')
+
+        # username_hex = username_bytes.hex()
+
+        # #known_hash_value = bytes.fromhex(known_hmac_hex)
+
+        # # Data to be appended
+        # appended_data = b'&isAdmin=true'
+
+        # # Perform length extension attack
+        # new_hmac = md4_length_extension_attack(username_bytes, known_hash_value, appended_data)
 
         # guess = "757365726e616d653d757365723030303030:" + new_hmac.hex()
         # print(f'Crafted Guess: {guess}')
@@ -928,6 +1006,10 @@ for i in range(7, 8):
         #new_hmac = sha1_length_extension_attack(original_message, known_hmac, appended_data)
         #new_hmac = sha256_length_extension_attack(original_message, known_hmac, appended_data)
 
+        # admin
+        # 757365726e616d653d7573657230303030302661646d696e3d74727565
+        # isAdmin
+        # 757365726e616d653d75736572303030303026697341646d696e3d74727565
 
         # Display results
         # print(f'Original Message: {original_message.decode()}')
