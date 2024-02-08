@@ -4,7 +4,7 @@ import base64
 import wave
 import numpy as np
 import matplotlib.pyplot as plt
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import random
 import hmac
@@ -399,74 +399,47 @@ def predict_next_key(hmac_hexdigest, message, key_size):
 
     return None
 
-def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
-    # getcontext().prec = 18  # For example, precision to 16 decimal places
-
-    # # Start and stop values as Decimals
-    # start = Decimal(str(start_time))
-    # stop = Decimal(str(end_time))
-    # step = Decimal('0.0000001')
-
+def sys_time_MD5_brute_force(start_time, end_time, known_hmac_hex):
+    # Convert start and end times to integers representing microseconds
     scale = 1000000
+    current_int = int(start_time.timestamp() * scale)
+    end_int = int(end_time.timestamp() * scale)
 
-    # Current value
-    current_int = int(start_time * scale)
-
+    # Known message
     username = "username=user00000"
-
     username_bytes = username.encode('utf-8')
 
-    username_hex = username_bytes.hex()
-
-    while current_int <= (end_time * scale):
-    # while current_time <= end_time:
-        # seed = current_time
-        # current_time += i
-        # print(float(current))
+    while current_int <= end_int:
+        # Convert current time back to float for seeding
         current_float = current_int / scale
-        # print(current_float)
+        print(current_float)
         random.seed(current_float)
 
-        #Trying to see if I need a further number in sequence with for loop
-        # for i in range(5):
-            # seed = current_time + i
-            # random.seed(seed)
-
-
+        # Generate secret key
         secret_key_int = random.getrandbits(256)
-
         secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
 
-        # hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.sha1)
+        # Create HMAC object with MD5
+        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+        digest = hmac_obj.hexdigest()
 
-        #     # Get the HMAC digest
-        # digest = hmac_obj.hexdigest()
-        # print(digest)
-        the_hmac = hashlib.md5(username_bytes + secret_key_bytes)
-        print(the_hmac.hexdigest())
-            # hmac.compare_digest(digest,known_hmac_hex)
-        if known_hmac_hex in the_hmac.hexdigest():
-            print("Found a match")
-            username = "username=admin"
+        # Check if the known HMAC is in the generated HMAC
+        if known_hmac_hex in digest:
+            print(f"Found a match at seed time: {datetime.fromtimestamp(current_float)}")
+            # Generate admin HMAC for submission
+            admin_username = "username=admin"
+            admin_username_bytes = admin_username.encode('utf-8')
+            admin_hmac_obj = hmac.new(secret_key_bytes, admin_username_bytes, hashlib.md5)
+            admin_digest = admin_hmac_obj.hexdigest()
 
-            username_bytes = username.encode('utf-8')
-
-            username_hex = username_bytes.hex()
-                
-                # secret_key_int = random.getrandbits(256)
-
-                # secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
-
-            hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
-
-                # Get the HMAC digest
-            digest = hmac_obj.hexdigest()
-
-            guess = username_hex + ":" + digest
-
+            guess = f"{admin_username_bytes.hex()}:{admin_digest}"
+            print(f"Submit this guess: {guess}")
+            # Assuming solve function submits the guess and checks response
             h = solve(level, guess)
             if 'hash' in h: hashes[level] = h['hash']
+            break
         else:
+            # Increment the current time by one microsecond
             current_int += 1
 
 
@@ -828,10 +801,10 @@ hashes = {}
 
 for i in range(7, 8):
     level = i
-    start_time = time.time()
+    start_time = datetime.now() - timedelta(minutes=1)
     #current_time = str(time.time()).encode('utf-8')
     data = fetch(level)
-    end_time = time.time()
+    end_time = datetime.now()
     print(start_time)
     print(end_time)
     # data = 'hi'
