@@ -400,15 +400,17 @@ def predict_next_key(hmac_hexdigest, message, key_size):
     return None
 
 def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
-    getcontext().prec = 17  # For example, precision to 16 decimal places
+    # getcontext().prec = 18  # For example, precision to 16 decimal places
 
-    # Start and stop values as Decimals
-    start = Decimal(str(start_time))
-    stop = Decimal(str(end_time))
-    step = Decimal('0.0000001')
+    # # Start and stop values as Decimals
+    # start = Decimal(str(start_time))
+    # stop = Decimal(str(end_time))
+    # step = Decimal('0.0000001')
+
+    scale = 1000000
 
     # Current value
-    current = start
+    current_int = int(start_time * scale)
 
     username = "username=user00000"
 
@@ -416,12 +418,14 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
 
     username_hex = username_bytes.hex()
 
-    while current <= stop:
+    while current_int <= (end_time * scale):
     # while current_time <= end_time:
         # seed = current_time
         # current_time += i
-        # print(current)
-        random.seed(float(current))
+        # print(float(current))
+        current_float = current_int / scale
+        # print(current_float)
+        random.seed(current_float)
 
         #Trying to see if I need a further number in sequence with for loop
         # for i in range(5):
@@ -433,15 +437,15 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
 
         secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
 
-        hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+        # hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.sha1)
 
-            #hmac_obj = hmac.new(seed, username_bytes, hashlib.md5)
-
-            # Get the HMAC digest
-        digest = hmac_obj.hexdigest()
-
+        #     # Get the HMAC digest
+        # digest = hmac_obj.hexdigest()
+        # print(digest)
+        the_hmac = hashlib.md5(username_bytes + secret_key_bytes)
+        print(the_hmac.hexdigest())
             # hmac.compare_digest(digest,known_hmac_hex)
-        if hmac.compare_digest(digest,known_hmac_hex):
+        if known_hmac_hex in the_hmac.hexdigest():
             print("Found a match")
             username = "username=admin"
 
@@ -463,7 +467,7 @@ def sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex):
             h = solve(level, guess)
             if 'hash' in h: hashes[level] = h['hash']
         else:
-            current += step
+            current_int += 1
 
 
 def F(X, Y, Z):
@@ -828,7 +832,6 @@ for i in range(7, 8):
     #current_time = str(time.time()).encode('utf-8')
     data = fetch(level)
     end_time = time.time()
-    print(type(start_time))
     print(start_time)
     print(end_time)
     # data = 'hi'
@@ -900,6 +903,10 @@ for i in range(7, 8):
         # 'hint': 'NotImplementedError: /dev/urandom (or equivalent) not found... 
         #  key = random.getrandbits(256)...', 'level': '7'}
 
+        # 433eff06bce3f22b8c97ff26e9023601190b369f
+        # 07589ba60627603552d929e6b15a1227
+        # 5dd4161c0a71075d846e13e049d5726a
+
         #dd if=/dev/random bs=1 count=1
         #dd if=/dev/urandom bs=1 count=1 | od -cx
 
@@ -921,8 +928,34 @@ for i in range(7, 8):
         #     os.rename("/dev/random", "/dev/random_temp")
 
         #     print("done")
-        
+
+        # random.seed(time.time())
+        # secret_key_int = random.getrandbits(256)
+
+        # secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+        # username = "username=admin"
+
+        # username_bytes = username.encode('utf-8')
+
+        # username_hex = username_bytes.hex()
+                
+        #         # secret_key_int = random.getrandbits(256)
+
+        #         # secret_key_bytes = secret_key_int.to_bytes(32, byteorder='big')
+
+        # hmac_obj = hmac.new(secret_key_bytes, username_bytes, hashlib.md5)
+
+        #         # Get the HMAC digest
+        # digest = hmac_obj.hexdigest()
+
+        # guess = username_hex + ":" + digest
+        # print(guess)
+        # h = solve(level, guess)
+        # if 'hash' in h: hashes[level] = h['hash']
+
         sys_time_MD5_brute_force(start_time,end_time,known_hmac_hex)
+        # sys_time_MD5_brute_force(int(start_time) - 6000000,int(end_time) + 100,known_hmac_hex)
         # #md5_brute_force(known_hmac_hex)
 
         # # Restore /dev/urandom if it was originally present
@@ -961,27 +994,27 @@ for i in range(7, 8):
         # print(h)
         # if 'hash' in h: hashes[level] = h['hash']
 
-        hex_string_generator = iterate_hex_string(len("1cc2a34f703ed2c0a8ea4bdbc0d390d3"))
+        # hex_string_generator = iterate_hex_string(len("1cc2a34f703ed2c0a8ea4bdbc0d390d3"))
 
-        # Getting the first 10 iterations as an example
-        current_highest = 0
-        current_leader = ""
-        for _ in range(256):
-            this_try = next(hex_string_generator)
-            guess = "757365726e616d653d61646d696e:" + this_try
-            # print(f'Crafted Guess: {guess}')
-            start_time = time.time()
-            h = solve(level, guess)
-            end_time = time.time()
-            total_time = end_time - start_time
-            if total_time > current_highest:
-                current_highest = total_time
-                current_leader = guess
-            # print(f'Crafted Guess: {guess}, Total time: {total_time}')
-            # print(h)
-            if 'hash' in h: hashes[level] = h['hash']
-        print(current_leader)
-        print(current_highest)
+        # # Getting the first 10 iterations as an example
+        # current_highest = 0
+        # current_leader = ""
+        # for _ in range(256):
+        #     this_try = next(hex_string_generator)
+        #     guess = "757365726e616d653d61646d696e:" + this_try
+        #     # print(f'Crafted Guess: {guess}')
+        #     start_time = time.time()
+        #     h = solve(level, guess)
+        #     end_time = time.time()
+        #     total_time = end_time - start_time
+        #     if total_time > current_highest:
+        #         current_highest = total_time
+        #         current_leader = guess
+        #     # print(f'Crafted Guess: {guess}, Total time: {total_time}')
+        #     # print(h)
+        #     if 'hash' in h: hashes[level] = h['hash']
+        # print(current_leader)
+        # print(current_highest)
 
         # username = "username=user00000"
 
